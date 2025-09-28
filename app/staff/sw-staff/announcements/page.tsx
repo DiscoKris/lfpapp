@@ -71,7 +71,7 @@ export default function AnnouncementsPage() {
               type="password"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="flex-1 p-2 rounded text-black text-sm"
+              className="flex-1 p-2 rounded text-white text-sm"
               placeholder="Enter code"
             />
             <button
