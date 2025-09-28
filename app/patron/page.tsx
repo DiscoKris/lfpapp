@@ -33,7 +33,9 @@ export default function PatronPage() {
     if (!el) return;
 
     function handleScroll() {
-      setShowTopFade(el.scrollTop > 0);
+    if (el) {
+  setShowTopFade(el.scrollTop > 0);
+}
     }
 
     el.addEventListener("scroll", handleScroll);
