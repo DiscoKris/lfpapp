@@ -76,7 +76,7 @@ export default function StaffSelectShowPage() {
             {sortedShows.map((show) => (
               <Link
                 key={show.id}
-                href={`/staff/${show.id}`}
+                href={`/staff/${show.id}-staff`}
                 className={`flex flex-col items-center justify-between h-36 p-3 border-2 rounded-xl shadow-lg transition ${
                   show.status === "inactive"
                     ? "opacity-40 pointer-events-none border-gray-500"
