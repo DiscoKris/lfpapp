@@ -107,7 +107,7 @@ export default function Home() {
       {/* Staff link */}
       <div className="relative z-10 mb-8 text-white text-sm opacity-80">
         Staff?{" "}
-        <a href="/staff-gate" className="underline font-medium">
+        <a href="/staff" className="underline font-medium">
           Tap here
         </a>
       </div>
