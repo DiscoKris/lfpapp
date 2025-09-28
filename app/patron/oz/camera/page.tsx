@@ -65,7 +65,7 @@ export default function CameraPage() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
     // Draw overlay
-    const overlay = new Image(1, 1); // default size — safe placeholder
+    const overlay: HTMLImageElement = new window.Image();
     overlay.src = filters[activeFilter];
     overlay.onload = () => {
       ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
