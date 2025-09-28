@@ -20,7 +20,7 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 gap-6">
           {/* Patrons */}
           <Link
-            href="/admin/patrons"
+            href="/admin/admin-patron"
             className="p-6 rounded-xl bg-gradient-to-r from-red-700 to-red-500 shadow-lg hover:scale-105 transform transition text-center"
           >
             <h2 className="text-xl font-semibold">🎭 Patrons</h2>
@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
 
           {/* Staff */}
           <Link
-            href="/admin/staff"
+            href="/admin/admin-staff"
             className="p-6 rounded-xl bg-gradient-to-r from-red-700 to-red-500 shadow-lg hover:scale-105 transform transition text-center"
           >
             <h2 className="text-xl font-semibold">👩‍💼 Staff</h2>
