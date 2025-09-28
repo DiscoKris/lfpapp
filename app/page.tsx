@@ -24,9 +24,7 @@ export default function Home() {
         auth,
         remember ? browserLocalPersistence : browserSessionPersistence
       );
-
       await signInWithEmailAndPassword(auth, email, password);
-
       router.push("/patron");
     } catch (err: any) {
       setError(err.message);
@@ -35,14 +33,14 @@ export default function Home() {
 
   return (
     <main
-      className="relative min-h-screen flex flex-col justify-between items-center px-6 bg-center bg-no-repeat bg-contain"
+      className="relative min-h-screen flex flex-col justify-between items-center px-6 bg-center bg-no-repeat bg-cover pt-safe"
       style={{ backgroundImage: "url('/bg-login.png')" }}
     >
       {/* Bright overlay */}
       <div className="absolute inset-0 bg-white/5" />
 
       {/* Logo */}
-      <div className="relative z-10 mt-12">
+      <div className="relative z-10 mt-16"> {/* increased top margin */}
         <Image
           src="/lfp-logo.png"
           alt="Lythgoe Family Productions"
