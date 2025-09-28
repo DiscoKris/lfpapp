@@ -31,7 +31,10 @@ export default function StaffSelectShowPage() {
     if (!el) return;
 
     function handleScroll() {
-      setShowTopFade(el.scrollTop > 0);
+      // ✅ Add null check here
+      if (el) {
+        setShowTopFade(el.scrollTop > 0);
+      }
     }
 
     el.addEventListener("scroll", handleScroll);
