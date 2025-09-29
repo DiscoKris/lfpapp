@@ -1,38 +1,60 @@
 "use client";
 
-import DocumentList from "@/components/DocumentList";
+import { useEffect, useState } from "react";
+import { getStorage, ref, listAll, getDownloadURL } from "firebase/storage";
+import { app } from "@/lib/firebaseConfig";
 
-const mockSchedules = [
-  {
-    id: "1",
-    name: "Snow White Week 1",
-    url: "/docs/sw-week1.pdf",
-    uploadedAt: "2025-09-15",
-  },
-  {
-    id: "2",
-    name: "Tech Rehearsal",
-    url: "/docs/sw-tech.pdf",
-    uploadedAt: "2025-09-20",
-  },
-];
+const storage = getStorage(app);
 
-export default function SchedulesPage() {
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+export default function StaffSchedulesPage() {
+  const [schedules, setSchedules] = useState<{ name: string; url: string }[]>([]);
+  const showId = "sw"; // hardcoded for Snow White — you can make this dynamic later
+
+  useEffect(() => {
+    async function fetchSchedules() {
+      try {
+        const folderRef = ref(storage, `staff/${showId}/schedules`);
+        const res = await listAll(folderRef);
+
+        const files = await Promise.all(
+          res.items.map(async (itemRef) => ({
+            name: itemRef.name,
+            url: await getDownloadURL(itemRef),
+          }))
+        );
+
+        setSchedules(files);
+      } catch (err) {
+        console.error("Error loading schedules:", err);
+      }
+    }
+
+    fetchSchedules();
+  }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
-      <h1 className="text-2xl font-bold text-center mb-2">
-        A Snow White Christmas – Schedules
-      </h1>
-      <p className="text-sm text-center text-gray-300 mb-6">{today}</p>
+      <h1 className="text-3xl font-bold text-center mb-8">Schedules – Snow White</h1>
 
-      <DocumentList title="" documents={mockSchedules} />
+      {schedules.length === 0 ? (
+        <p className="text-center text-gray-300">No schedules uploaded yet.</p>
+      ) : (
+        <ul className="space-y-4 max-w-md mx-auto">
+          {schedules.map((file) => (
+            <li key={file.name} className="bg-white/10 p-4 rounded-xl flex justify-between items-center">
+              <span>{file.name}</span>
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-red-700 px-4 py-2 rounded hover:bg-red-600"
+              >
+                View
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
