@@ -1,30 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { ref, listAll, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebaseConfig";
 
-export default function StaffSchedulesPage() {
-  const { showId } = useParams();
+export default function StaffOZPage() {
   const [schedules, setSchedules] = useState<{ name: string; url: string }[]>([]);
 
-  const showNames: Record<string, string> = {
-    sw: "Snow White",
-    oz: "The Winter of Oz",
-    al: "Aladdin",
-    cin: "Cinderella",
-    bb: "Beauty and the Beast",
-    pp: "Peter Pan",
-    // Add more as needed
-  };
-
   useEffect(() => {
-    if (!showId) return;
-
     async function fetchSchedules() {
       try {
-        const folderRef = ref(storage, `staff/${showId}/schedules`);
+        const folderRef = ref(storage, "staff/oz/schedules");
         const res = await listAll(folderRef);
 
         const files = await Promise.all(
@@ -41,12 +27,12 @@ export default function StaffSchedulesPage() {
     }
 
     fetchSchedules();
-  }, [showId]);
+  }, []);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
       <h1 className="text-3xl font-bold text-center mb-8">
-        Schedules – {showNames[showId as string] || showId}
+        Schedules – The Winter of Oz
       </h1>
 
       {schedules.length === 0 ? (

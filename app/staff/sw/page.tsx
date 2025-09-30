@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Tile from "../../../components/Tile";
 import Image from "next/image";
 
-export default function OzStaffPage() {
+export default function swStaffPage() {
   const router = useRouter();
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export default function OzStaffPage() {
         <Image
           src="/sw_logo.png"
           alt="A Snow WHite Christmas"
-          width={180}
-          height={100}
+          width={300}
+          height={300}
           className="object-contain mb-2 drop-shadow-lg"
         />
         <p className="text-lg font-medium">The Laguna Playhouse</p>
