@@ -87,7 +87,7 @@ export default function AnnouncementsPage() {
               value={newMsg}
               onChange={(e) => setNewMsg(e.target.value)}
               placeholder="Type your announcement..."
-              className="w-full p-2 rounded text-black text-sm mb-2"
+              className="w-full p-2 rounded text-white text-sm mb-2"
               rows={2}
             />
             <button

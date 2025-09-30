@@ -71,7 +71,7 @@ export default function AnnouncementsPage() {
               type="password"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="flex-1 p-2 rounded text-black text-sm"
+              className="flex-1 p-2 rounded text-white text-sm"
               placeholder="Enter code"
             />
             <button
@@ -87,7 +87,7 @@ export default function AnnouncementsPage() {
               value={newMsg}
               onChange={(e) => setNewMsg(e.target.value)}
               placeholder="Type your announcement..."
-              className="w-full p-2 rounded text-black text-sm mb-2"
+              className="w-full p-2 rounded text-white text-sm mb-2"
               rows={2}
             />
             <button
