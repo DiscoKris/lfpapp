@@ -16,10 +16,10 @@ type Show = {
 const shows: Show[] = [
   { id: "oz", name: "The Winter of Oz", logo: "oz_logo.png", city: "Thousand Oaks", status: "active", order: 1 },
   { id: "sw", name: "A Snow White Christmas", logo: "sw_logo.png", city: "Laguna Playhouse", status: "active", order: 2 },
-  { id: "aladdin", name: "Aladdin", logo: "al_logo.png", city: "Los Angeles", status: "inactive", order: 3 },
-  { id: "peter-pan", name: "Peter Pan", logo: "pp_logo.png", city: "San Diego", status: "inactive", order: 4 },
-  { id: "cinderella", name: "Cinderella", logo: "cin_logo.png", city: "Orange County", status: "inactive", order: 5 },
-  { id: "sleeping-beauty", name: "Sleeping Beauty", logo: "sb_logo.png", city: "Sacramento", status: "inactive", order: 6 },
+  { id: "al", name: "Aladdin", logo: "al_logo.png", city: "Los Angeles", status: "inactive", order: 3 },
+  { id: "pp", name: "Peter Pan", logo: "pp_logo.png", city: "San Diego", status: "inactive", order: 4 },
+  { id: "cin", name: "Cinderella", logo: "cin_logo.png", city: "Orange County", status: "inactive", order: 5 },
+  { id: "sb", name: "Sleeping Beauty", logo: "sb_logo.png", city: "Sacramento", status: "inactive", order: 6 },
 ];
 
 export default function StaffSelectShowPage() {

@@ -12,20 +12,20 @@ export default function AdminSchedulesPage() {
 
   const handleUpload = async () => {
     if (!selectedShow || !file) {
-      setStatus("Please select a show and choose a file.");
+      setStatus("⚠️ Please select a show and choose a file.");
       return;
     }
 
-    const showId = selectedShow.toLowerCase().replace(/\s+/g, "-") + "-staff";
+    const showId = selectedShow; // e.g. "sw", "oz", "aladdin"
     const storageRef = ref(storage, `staff/${showId}/schedules/${file.name}`);
 
     try {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
-      console.log("File uploaded at:", url);
+      console.log("✅ File uploaded at:", url);
       setStatus("✅ File uploaded successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("❌ Upload error:", err);
       setStatus("❌ Error uploading file.");
     }
   };
@@ -38,9 +38,9 @@ export default function AdminSchedulesPage() {
       <AdminShowSelect onSelect={setSelectedShow} />
 
       {selectedShow && (
-        <div className="bg-black/50 p-6 rounded-xl shadow-lg">
+        <div className="bg-black/50 p-6 rounded-xl shadow-lg mt-6">
           <h2 className="text-lg font-semibold mb-4">
-            Upload Schedule for {selectedShow}
+            Upload Schedule for {selectedShow.toUpperCase()}
           </h2>
 
           <input
@@ -57,9 +57,7 @@ export default function AdminSchedulesPage() {
             Upload
           </button>
 
-          {status && (
-            <p className="mt-4 text-sm">{status}</p>
-          )}
+          {status && <p className="mt-4 text-sm">{status}</p>}
         </div>
       )}
     </main>
