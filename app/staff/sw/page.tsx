@@ -1,57 +1,120 @@
 "use client";
 
-import { useEffect } from "react";
-import { auth } from "../../../lib/firebaseConfig";
-import { onAuthStateChanged } from "firebase/auth";
-import { useRouter } from "next/navigation";
-import Tile from "../../../components/Tile";
+import Link from "next/link";
 import Image from "next/image";
+import { useState, useRef, useEffect } from "react";
 
-export default function SnowWhiteStaffPage() {
-  const router = useRouter();
+type Show = {
+  id: string;
+  name: string;
+  logo: string;
+  city: string;
+  status: "active" | "inactive";
+  order: number;
+};
+
+const shows: Show[] = [
+  { id: "oz", name: "The Winter of Oz", logo: "oz_logo.png", city: "Thousand Oaks", status: "active", order: 1 },
+  { id: "sw", name: "A Snow White Christmas", logo: "sw_logo.png", city: "Laguna Playhouse", status: "active", order: 2 },
+  { id: "al", name: "Aladdin", logo: "al_logo.png", city: "Los Angeles", status: "inactive", order: 3 },
+  { id: "pp", name: "Peter Pan", logo: "pp_logo.png", city: "San Diego", status: "inactive", order: 4 },
+  { id: "cin", name: "Cinderella", logo: "cin_logo.png", city: "Orange County", status: "inactive", order: 5 },
+  { id: "sb", name: "Sleeping Beauty", logo: "sb_logo.png", city: "Sacramento", status: "inactive", order: 6 },
+];
+
+export default function StaffSelectShowPage() {
+  const [showTopFade, setShowTopFade] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // 🚨 Auth check temporarily disabled for testing
-      // if (!user) {
-      //   router.push("/"); // redirect to login if not logged in
-      // }
-      console.log("Staff SW Auth check:", user ? "Logged in" : "Not logged in");
-    });
-    return () => unsubscribe();
-  }, [router]);
+    const el = scrollRef.current;
+    if (!el) return;
+
+    function handleScroll() {
+      if (el) {
+        setShowTopFade(el.scrollTop > 0);
+      }
+    }
+
+    el.addEventListener("scroll", handleScroll);
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const sortedShows = [...shows].sort((a, b) => a.order - b.order);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10 flex flex-col items-center">
-      {/* Logo + City */}
-      <div className="flex flex-col items-center mb-8">
-        <Image
-          src="/sw_logo.png"
-          alt="A Snow White Christmas"
-          width={300}
-          height={300}
-          className="object-contain mb-2 drop-shadow-lg"
-        />
-        <p className="text-lg font-medium">Laguna Playhouse</p>
-      </div>
+    <main
+      className="relative min-h-screen flex flex-col justify-center items-center px-4 bg-center bg-no-repeat bg-cover"
+      style={{ backgroundImage: "url('/bg-login.png')" }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/5" />
 
-      {/* Dashboard Heading */}
-      <h1 className="text-2xl font-bold text-center mb-8">Staff Dashboard</h1>
+      {/* Container */}
+      <div className="relative z-10 w-full max-w-md mx-auto text-white flex flex-col h-screen">
+        {/* Logo */}
+        <div className="flex justify-center mt-6 mb-4">
+          <Image
+            src="/lfp-logo.png"
+            alt="Lythgoe Family Productions"
+            width={160}
+            height={50}
+            priority
+            className="drop-shadow-md"
+          />
+        </div>
 
-      {/* Tiles Grid */}
-      <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Schedules" emoji="📅" href="/staff/sw/schedules" />
-        <Tile
-  title="Announcements"
-  emoji="📢"
-  href="/staff/sw/announcements"
-  badgeCount={2} // temporary hardcode until Firestore is hooked up
-/>
+        {/* Heading */}
+        <h1 className="text-lg font-bold text-center mb-4">
+          Select Your Show (Staff)
+        </h1>
 
-        <Tile title="Documents" emoji="📄" href="/staff/sw/documents" />
-        <Tile title="Contacts" emoji="📇" href="/staff/sw/contacts" />
-        <Tile title="Technical" emoji="⚙️" href="/staff/sw/technical" />
-        <Tile title="Stage Reports" emoji="📝" href="/staff/sw/stage-reports" />
+        {/* Scrollable grid */}
+        <div ref={scrollRef} className="relative flex-1 overflow-y-auto pb-6">
+          <div className="grid grid-cols-2 gap-4">
+            {sortedShows.map((show) => (
+              <Link
+                key={show.id}
+                href={`/staff/${show.id}`}
+                className={`flex flex-col items-center justify-between h-36 p-3 border-2 rounded-xl shadow-lg transition ${
+                  show.status === "inactive"
+                    ? "opacity-40 pointer-events-none border-gray-500"
+                    : "hover:scale-105 border-red-500"
+                } bg-black/40`}
+              >
+                {/* Centered logo */}
+                <div className="flex-grow flex items-center justify-center">
+                  <Image
+                    src={`/${show.logo}`}
+                    alt={show.name}
+                    width={100}
+                    height={70}
+                    className="object-contain"
+                  />
+                </div>
+
+                {/* City anchored at bottom */}
+                <p className="text-xs font-medium mt-2">{show.city}</p>
+              </Link>
+            ))}
+          </div>
+
+          {/* Scroll fades */}
+          {showTopFade && (
+            <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-b from-black/70 to-transparent" />
+          )}
+          <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-t from-black/70 to-transparent" />
+        </div>
+
+        {/* Inventory button */}
+        <div className="mt-4 mb-6 flex justify-center">
+          <Link
+            href="/staff/inventory"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-red-700 to-red-500 text-white font-semibold shadow-md hover:from-red-600 hover:to-red-400 transition"
+          >
+            LFP INVENTORY
+          </Link>
+        </div>
       </div>
     </main>
   );
