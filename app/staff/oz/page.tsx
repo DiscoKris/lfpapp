@@ -40,18 +40,18 @@ export default function OzStaffPage() {
 
       {/* Tiles Grid */}
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Schedules" emoji="📅" href="/staff/oz-staff/schedules" />
+        <Tile title="Schedules" emoji="📅" href="/staff/oz/schedules" />
         <Tile
   title="Announcements"
   emoji="📢"
-  href="/staff/oz-staff/announcements"
+  href="/staff/oz/announcements"
   badgeCount={2} // temporary hardcode until Firestore is hooked up
 />
 
-        <Tile title="Documents" emoji="📄" href="/staff/oz-staff/documents" />
-        <Tile title="Contacts" emoji="📇" href="/staff/oz-staff/contacts" />
-        <Tile title="Technical" emoji="⚙️" href="/staff/oz-staff/technical" />
-        <Tile title="Stage Reports" emoji="📝" href="/staff/oz-staff/stage-reports" />
+        <Tile title="Documents" emoji="📄" href="/staff/oz/documents" />
+        <Tile title="Contacts" emoji="📇" href="/staff/oz/contacts" />
+        <Tile title="Technical" emoji="⚙️" href="/staff/oz/technical" />
+        <Tile title="Stage Reports" emoji="📝" href="/staff/oz/stage-reports" />
       </div>
     </main>
   );

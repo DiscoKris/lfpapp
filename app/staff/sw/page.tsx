@@ -40,18 +40,18 @@ export default function SnowWhiteStaffPage() {
 
       {/* Tiles Grid */}
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Schedules" emoji="📅" href="/staff/sw-staff/schedules" />
+        <Tile title="Schedules" emoji="📅" href="/staff/sw/schedules" />
         <Tile
   title="Announcements"
   emoji="📢"
-  href="/staff/sw-staff/announcements"
+  href="/staff/sw/announcements"
   badgeCount={2} // temporary hardcode until Firestore is hooked up
 />
 
-        <Tile title="Documents" emoji="📄" href="/staff/sw-staff/documents" />
-        <Tile title="Contacts" emoji="📇" href="/staff/sw-staff/contacts" />
-        <Tile title="Technical" emoji="⚙️" href="/staff/sw-staff/technical" />
-        <Tile title="Stage Reports" emoji="📝" href="/staff/sw-staff/stage-reports" />
+        <Tile title="Documents" emoji="📄" href="/staff/sw/documents" />
+        <Tile title="Contacts" emoji="📇" href="/staff/sw/contacts" />
+        <Tile title="Technical" emoji="⚙️" href="/staff/sw/technical" />
+        <Tile title="Stage Reports" emoji="📝" href="/staff/sw/stage-reports" />
       </div>
     </main>
   );
