@@ -20,7 +20,7 @@ export default function AdminPatronPage() {
         <div className="grid grid-cols-1 gap-6">
           {/* Programs */}
           <Link
-            href="/admin/admin-patron/programs"
+            href="/admin/patron/programs"
             className="p-6 rounded-xl bg-gradient-to-r from-red-700 to-red-500 shadow-lg hover:scale-105 transform transition text-center"
           >
             <h2 className="text-xl font-semibold">📖 Programs</h2>
@@ -29,7 +29,7 @@ export default function AdminPatronPage() {
 
           {/* Games */}
           <Link
-            href="/admin/admin-patron/games"
+            href="/admin/patron/games"
             className="p-6 rounded-xl bg-gradient-to-r from-red-700 to-red-500 shadow-lg hover:scale-105 transform transition text-center"
           >
             <h2 className="text-xl font-semibold">🎮 Games</h2>
@@ -38,7 +38,7 @@ export default function AdminPatronPage() {
 
           {/* Filters */}
           <Link
-            href="/admin/admin-patron/filters"
+            href="/admin/patron/filters"
             className="p-6 rounded-xl bg-gradient-to-r from-red-700 to-red-500 shadow-lg hover:scale-105 transform transition text-center"
           >
             <h2 className="text-xl font-semibold">📸 Filters</h2>
@@ -47,7 +47,7 @@ export default function AdminPatronPage() {
 
           {/* Upcoming Shows */}
           <Link
-            href="/admin/admin-patron/upcoming"
+            href="/admin/patron/upcoming"
             className="p-6 rounded-xl bg-gradient-to-r from-red-700 to-red-500 shadow-lg hover:scale-105 transform transition text-center"
           >
             <h2 className="text-xl font-semibold">🎟️ Upcoming Shows</h2>
