@@ -51,7 +51,7 @@ export default function OzStaffPage() {
         <Tile title="Documents" emoji="📄" href="/staff/oz/documents" />
         <Tile title="Contacts" emoji="📇" href="/staff/oz/contacts" />
         <Tile title="Technical" emoji="⚙️" href="/staff/oz/technical" />
-        <Tile title="Stage Reports" emoji="📝" href="/staff/oz/stage-reports" />
+        <Tile title="Stage Reports" emoji="📝" href="/staff/oz/reports" />
       </div>
     </main>
   );

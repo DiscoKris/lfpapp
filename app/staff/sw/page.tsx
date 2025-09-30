@@ -1,62 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ref, listAll, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebaseConfig";
+import { useEffect } from "react";
+import { auth } from "../../../lib/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import { useRouter } from "next/navigation";
+import Tile from "../../../components/Tile";
+import Image from "next/image";
 
-export default function StaffSnowWhitePage() {
-  const [schedules, setSchedules] = useState<{ name: string; url: string }[]>([]);
+export default function OzStaffPage() {
+  const router = useRouter();
 
   useEffect(() => {
-    async function fetchSchedules() {
-      try {
-        const folderRef = ref(storage, "staff/sw/schedules");
-        const res = await listAll(folderRef);
-
-        const files = await Promise.all(
-          res.items.map(async (itemRef) => ({
-            name: itemRef.name,
-            url: await getDownloadURL(itemRef),
-          }))
-        );
-
-        setSchedules(files);
-      } catch (err) {
-        console.error("Error loading schedules:", err);
-      }
-    }
-
-    fetchSchedules();
-  }, []);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      // 🚨 Auth check temporarily disabled for testing
+      // if (!user) {
+      //   router.push("/"); // redirect to login if not logged in
+      // }
+      console.log("Staff SW Auth check:", user ? "Logged in" : "Not logged in");
+    });
+    return () => unsubscribe();
+  }, [router]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
-      <h1 className="text-3xl font-bold text-center mb-8">
-        Schedules – Snow White
-      </h1>
+    <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10 flex flex-col items-center">
+      {/* Logo + City */}
+      <div className="flex flex-col items-center mb-8">
+        <Image
+          src="/sw_logo.png"
+          alt="A Snow WHite Christmas"
+          width={180}
+          height={100}
+          className="object-contain mb-2 drop-shadow-lg"
+        />
+        <p className="text-lg font-medium">The Laguna Playhouse</p>
+      </div>
 
-      {schedules.length === 0 ? (
-        <p className="text-center text-gray-300">No schedules uploaded yet.</p>
-      ) : (
-        <ul className="space-y-4 max-w-md mx-auto">
-          {schedules.map((file) => (
-            <li
-              key={file.name}
-              className="bg-white/10 p-4 rounded-xl flex justify-between items-center"
-            >
-              <span>{file.name}</span>
-              <a
-                href={file.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-red-700 px-4 py-2 rounded hover:bg-red-600"
-              >
-                View
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* Dashboard Heading */}
+      <h1 className="text-2xl font-bold text-center mb-8">Staff Dashboard</h1>
+
+      {/* Tiles Grid */}
+      <div className="grid grid-cols-2 gap-6 max-w-md w-full">
+        <Tile title="Schedules" emoji="📅" href="/staff/oz/schedules" />
+        <Tile
+  title="Announcements"
+  emoji="📢"
+  href="/staff/sw/announcements"
+  badgeCount={2} // temporary hardcode until Firestore is hooked up
+/>
+
+        <Tile title="Documents" emoji="📄" href="/staff/sw/documents" />
+        <Tile title="Contacts" emoji="📇" href="/staff/sw/contacts" />
+        <Tile title="Technical" emoji="⚙️" href="/staff/sw/technical" />
+        <Tile title="Stage Reports" emoji="📝" href="/staff/sw/reports" />
+      </div>
     </main>
   );
 }
