@@ -3,16 +3,9 @@
 import { useState } from "react";
 import AdminShowSelect from "../../../../components/AdminShowSelect";
 import { storage } from "../../../../lib/firebaseConfig";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-type Document = {
-  id: string;
-  name: string;
-  url: string;
-  uploadedAt: string;
-};
-
-export default function AdminDocumentsPage() {
+export default function AdminSchedulesPage() {
   const [selectedShow, setSelectedShow] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
@@ -23,17 +16,17 @@ export default function AdminDocumentsPage() {
       return;
     }
 
-    const showId = selectedShow; // e.g. "sw", "oz"
+    const showId = selectedShow; // e.g. "sw", "oz", "aladdin"
     const storageRef = ref(storage, `staff/${showId}/documents/${file.name}`);
 
     try {
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
       console.log("✅ File uploaded at:", url);
-      setStatus("✅ Document uploaded successfully!");
+      setStatus("✅ File uploaded successfully!");
     } catch (err) {
       console.error("❌ Upload error:", err);
-      setStatus("❌ Error uploading document.");
+      setStatus("❌ Error uploading file.");
     }
   };
 
