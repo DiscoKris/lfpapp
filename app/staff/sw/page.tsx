@@ -40,7 +40,7 @@ export default function OzStaffPage() {
 
       {/* Tiles Grid */}
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Schedules" emoji="📅" href="/staff/oz/schedules" />
+        <Tile title="Schedules" emoji="📅" href="/staff/sw/schedules" />
         <Tile
   title="Announcements"
   emoji="📢"
