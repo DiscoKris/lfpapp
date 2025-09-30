@@ -1,121 +1,62 @@
 "use client";
 
-import Link from "next/link";
-import Image from "next/image";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { ref, listAll, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebaseConfig";
 
-type Show = {
-  id: string;
-  name: string;
-  logo: string;
-  city: string;
-  status: "active" | "inactive";
-  order: number;
-};
-
-const shows: Show[] = [
-  { id: "oz", name: "The Winter of Oz", logo: "oz_logo.png", city: "Thousand Oaks", status: "active", order: 1 },
-  { id: "sw", name: "A Snow White Christmas", logo: "sw_logo.png", city: "Laguna Playhouse", status: "active", order: 2 },
-  { id: "al", name: "Aladdin", logo: "al_logo.png", city: "Los Angeles", status: "inactive", order: 3 },
-  { id: "pp", name: "Peter Pan", logo: "pp_logo.png", city: "San Diego", status: "inactive", order: 4 },
-  { id: "cin", name: "Cinderella", logo: "cin_logo.png", city: "Orange County", status: "inactive", order: 5 },
-  { id: "sb", name: "Sleeping Beauty", logo: "sb_logo.png", city: "Sacramento", status: "inactive", order: 6 },
-];
-
-export default function StaffSelectShowPage() {
-  const [showTopFade, setShowTopFade] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+export default function StaffSnowWhitePage() {
+  const [schedules, setSchedules] = useState<{ name: string; url: string }[]>([]);
 
   useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
+    async function fetchSchedules() {
+      try {
+        const folderRef = ref(storage, "staff/sw/schedules");
+        const res = await listAll(folderRef);
 
-    function handleScroll() {
-      if (el) {
-        setShowTopFade(el.scrollTop > 0);
+        const files = await Promise.all(
+          res.items.map(async (itemRef) => ({
+            name: itemRef.name,
+            url: await getDownloadURL(itemRef),
+          }))
+        );
+
+        setSchedules(files);
+      } catch (err) {
+        console.error("Error loading schedules:", err);
       }
     }
 
-    el.addEventListener("scroll", handleScroll);
-    return () => el.removeEventListener("scroll", handleScroll);
+    fetchSchedules();
   }, []);
 
-  const sortedShows = [...shows].sort((a, b) => a.order - b.order);
-
   return (
-    <main
-      className="relative min-h-screen flex flex-col justify-center items-center px-4 bg-center bg-no-repeat bg-cover"
-      style={{ backgroundImage: "url('/bg-login.png')" }}
-    >
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/5" />
+    <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
+      <h1 className="text-3xl font-bold text-center mb-8">
+        Schedules – Snow White
+      </h1>
 
-      {/* Container */}
-      <div className="relative z-10 w-full max-w-md mx-auto text-white flex flex-col h-screen">
-        {/* Logo */}
-        <div className="flex justify-center mt-6 mb-4">
-          <Image
-            src="/lfp-logo.png"
-            alt="Lythgoe Family Productions"
-            width={160}
-            height={50}
-            priority
-            className="drop-shadow-md"
-          />
-        </div>
-
-        {/* Heading */}
-        <h1 className="text-lg font-bold text-center mb-4">
-          Select Your Show (Staff)
-        </h1>
-
-        {/* Scrollable grid */}
-        <div ref={scrollRef} className="relative flex-1 overflow-y-auto pb-6">
-          <div className="grid grid-cols-2 gap-4">
-            {sortedShows.map((show) => (
-              <Link
-                key={show.id}
-                href={`/staff/${show.id}`}
-                className={`flex flex-col items-center justify-between h-36 p-3 border-2 rounded-xl shadow-lg transition ${
-                  show.status === "inactive"
-                    ? "opacity-40 pointer-events-none border-gray-500"
-                    : "hover:scale-105 border-red-500"
-                } bg-black/40`}
+      {schedules.length === 0 ? (
+        <p className="text-center text-gray-300">No schedules uploaded yet.</p>
+      ) : (
+        <ul className="space-y-4 max-w-md mx-auto">
+          {schedules.map((file) => (
+            <li
+              key={file.name}
+              className="bg-white/10 p-4 rounded-xl flex justify-between items-center"
+            >
+              <span>{file.name}</span>
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-red-700 px-4 py-2 rounded hover:bg-red-600"
               >
-                {/* Centered logo */}
-                <div className="flex-grow flex items-center justify-center">
-                  <Image
-                    src={`/${show.logo}`}
-                    alt={show.name}
-                    width={100}
-                    height={70}
-                    className="object-contain"
-                  />
-                </div>
-
-                {/* City anchored at bottom */}
-                <p className="text-xs font-medium mt-2">{show.city}</p>
-              </Link>
-            ))}
-          </div>
-
-          {/* Scroll fades */}
-          {showTopFade && (
-            <div className="absolute top-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-b from-black/70 to-transparent" />
-          )}
-          <div className="absolute bottom-0 left-0 right-0 h-10 pointer-events-none bg-gradient-to-t from-black/70 to-transparent" />
-        </div>
-
-        {/* Inventory button */}
-        <div className="mt-4 mb-6 flex justify-center">
-          <Link
-            href="/staff/inventory"
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-red-700 to-red-500 text-white font-semibold shadow-md hover:from-red-600 hover:to-red-400 transition"
-          >
-            LFP INVENTORY
-          </Link>
-        </div>
-      </div>
+                View
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   );
 }
