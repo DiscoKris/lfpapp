@@ -9,37 +9,37 @@ export default function AdminStaffPage() {
 
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
         <Link
-          href="/admin/admin-staff/schedules"
+          href="/admin/staff/schedules"
           className="p-6 rounded-xl bg-red-700 hover:bg-red-600 transition text-center shadow-lg"
         >
           📅 Schedules
         </Link>
         <Link
-          href="/admin/admin-staff/announcements"
+          href="/admin/staff/announcements"
           className="p-6 rounded-xl bg-red-700 hover:bg-red-600 transition text-center shadow-lg"
         >
           📢 Announcements
         </Link>
         <Link
-          href="/admin/admin-staff/documents"
+          href="/admin/staff/documents"
           className="p-6 rounded-xl bg-red-700 hover:bg-red-600 transition text-center shadow-lg"
         >
           📄 Documents
         </Link>
         <Link
-          href="/admin/admin-staff/technical"
+          href="/admin/staff/technical"
           className="p-6 rounded-xl bg-red-700 hover:bg-red-600 transition text-center shadow-lg"
         >
           ⚙️ Technical
         </Link>
         <Link
-          href="/admin/admin-staff/contacts"
+          href="/admin/staff/contacts"
           className="p-6 rounded-xl bg-red-700 hover:bg-red-600 transition text-center shadow-lg"
         >
           👥 Contacts
         </Link>
         <Link
-          href="/admin/admin-staff/reports"
+          href="/admin/staff/reports"
           className="p-6 rounded-xl bg-red-700 hover:bg-red-600 transition text-center shadow-lg"
         >
           📝 Reports
