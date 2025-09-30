@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import AdminShowSelect from "../../../../components/AdminShowSelect";
+import { storage } from "../../../../lib/firebaseConfig";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 type Document = {
   id: string;
@@ -12,25 +14,28 @@ type Document = {
 
 export default function AdminDocumentsPage() {
   const [selectedShow, setSelectedShow] = useState("");
-  const [docs, setDocs] = useState<Document[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState("");
 
-  function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleUpload = async () => {
+    if (!selectedShow || !file) {
+      setStatus("⚠️ Please select a show and choose a file.");
+      return;
+    }
 
-    const newDoc: Document = {
-      id: Date.now().toString(),
-      name: file.name,
-      url: URL.createObjectURL(file), // ⚡ placeholder until Firebase hookup
-      uploadedAt: new Date().toLocaleDateString(),
-    };
+    const showId = selectedShow; // e.g. "sw", "oz"
+    const storageRef = ref(storage, `staff/${showId}/documents/${file.name}`);
 
-    setDocs([...docs, newDoc]);
-  }
-
-  function handleDelete(id: string) {
-    setDocs((prev) => prev.filter((doc) => doc.id !== id));
-  }
+    try {
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      console.log("✅ File uploaded at:", url);
+      setStatus("✅ Document uploaded successfully!");
+    } catch (err) {
+      console.error("❌ Upload error:", err);
+      setStatus("❌ Error uploading document.");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
@@ -40,57 +45,26 @@ export default function AdminDocumentsPage() {
       <AdminShowSelect onSelect={setSelectedShow} />
 
       {selectedShow && (
-        <div className="bg-black/50 p-6 rounded-xl shadow-lg">
+        <div className="bg-black/50 p-6 rounded-xl shadow-lg mt-6">
           <h2 className="text-lg font-semibold mb-4">
-            Upload Documents for {selectedShow}
+            Upload Documents for {selectedShow.toUpperCase()}
           </h2>
 
           <input
             type="file"
             accept="application/pdf"
-            onChange={handleUpload}
             className="w-full mb-4"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
 
-          {/* Documents List */}
-          {docs.length > 0 ? (
-            <ul className="space-y-3">
-              {docs.map((doc) => (
-                <li
-                  key={doc.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-black/40 p-3 rounded-lg"
-                >
-                  {/* Doc Info */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{doc.name}</p>
-                    <p className="text-xs opacity-70">
-                      Uploaded {doc.uploadedAt}
-                    </p>
-                  </div>
+          <button
+            onClick={handleUpload}
+            className="px-6 py-2 bg-red-700 hover:bg-red-600 rounded font-semibold"
+          >
+            Upload
+          </button>
 
-                  {/* Buttons */}
-                  <div className="flex gap-2 shrink-0">
-                    <a
-                      href={doc.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3 py-1 bg-red-700 rounded text-sm hover:bg-red-600"
-                    >
-                      View
-                    </a>
-                    <button
-                      onClick={() => handleDelete(doc.id)}
-                      className="px-3 py-1 bg-gray-600 rounded text-sm hover:bg-gray-500"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm opacity-70">No documents uploaded yet.</p>
-          )}
+          {status && <p className="mt-4 text-sm">{status}</p>}
         </div>
       )}
     </main>
