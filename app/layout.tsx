@@ -1,6 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import BackButton from "../components/BackButton";
+import BackButton from "../components/BackButton"; // add this line
 
 export const metadata: Metadata = {
   title: "Lythgoe Family Productions",
@@ -28,7 +28,8 @@ export default function RootLayout({
       </head>
       <body className="bg-black text-white">
         {/* Universal mobile container */}
-        <div className="w-full max-w-md mx-auto min-h-screen">
+        <div className="w-full max-w-md mx-auto min-h-screen p-4">
+          <BackButton />   {/* 👈 back button added here */}
           {children}
         </div>
       </body>
