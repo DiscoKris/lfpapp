@@ -11,7 +11,7 @@ export default function BackButton() {
   return (
     <button
       onClick={() => router.push("/dashboard")}
-      className="flex items-center gap-2 text-sm text-white bg-red-700 hover:bg-red-800 px-3 py-1 rounded-full shadow-md"
+      className="flex items-center justify-center text-sm text-white bg-red-700 hover:bg-red-800 px-4 py-2 rounded-full shadow-md"
     >
       ← Back
     </button>

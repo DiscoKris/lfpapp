@@ -31,6 +31,7 @@ export default function RootLayout({
 
         {/* Back button on background, full width */}
         <div className="p-4">
+          <div className="w-full max-w-md mx-auto"></div>
           <BackButton />
         </div>
       </body>
