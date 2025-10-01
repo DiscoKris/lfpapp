@@ -1,5 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import BackButton from "../components/BackButton";
 
 export const metadata: Metadata = {
   title: "Lythgoe Family Productions",
