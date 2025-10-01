@@ -1,15 +1,19 @@
 "use client";
-import { useRouter } from "next/navigation";
+
+import { usePathname, useRouter } from "next/navigation";
 
 export default function BackButton() {
+  const pathname = usePathname();
   const router = useRouter();
+
+  if (pathname === "/" || pathname === "/login") return null;
 
   return (
     <button
-      onClick={() => router.push("/patron")}
-      className="mt-6 px-4 py-2 rounded-lg bg-red-800 text-white font-semibold hover:bg-red-700 transition shadow-md"
+      onClick={() => router.push("/dashboard")}
+      className="flex items-center gap-2 text-sm text-white bg-red-700 hover:bg-red-800 px-3 py-1 rounded-full shadow-md"
     >
-      ← Back to Dashboard
+      ← Back
     </button>
   );
 }
