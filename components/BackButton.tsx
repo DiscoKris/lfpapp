@@ -10,7 +10,7 @@ export default function BackButton() {
 
   return (
     <button
-      onClick={() => router.push("/dashboard")}
+      onClick={() => router.push("/select-show")}
       className="flex items-center justify-center text-sm text-white bg-red-700 hover:bg-red-800 px-4 py-2 rounded-full shadow-md"
     >
       ← Back
