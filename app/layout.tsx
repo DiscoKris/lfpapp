@@ -29,10 +29,11 @@ export default function RootLayout({
         {/* Page content centered */}
         <div className="flex-grow w-full max-w-md mx-auto">{children}</div>
 
-        {/* Back button on background, full width */}
+        {/* Back button centered under card */}
         <div className="p-4">
-          <div className="w-full max-w-md mx-auto"></div>
-          <BackButton />
+          <div className="w-full max-w-md mx-auto flex justify-center">
+            <BackButton />
+          </div>
         </div>
       </body>
     </html>
