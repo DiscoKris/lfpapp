@@ -55,17 +55,17 @@ export default function OzStaffPage() {
 
       {/* Tiles Grid */}
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Schedules" emoji="📅" href="/staff/oz/schedules" />
+        <Tile title="Schedules" emoji="📅" href="/staff/sw/schedules" />
         <Tile
           title="Announcements"
           emoji="📢"
-          href="/staff/oz/announcements"
+          href="/staff/sw/announcements"
           badgeCount={announcementCount}
         />
-        <Tile title="Documents" emoji="📄" href="/staff/oz/documents" />
-        <Tile title="Contacts" emoji="📇" href="/staff/oz/contacts" />
-        <Tile title="Technical" emoji="⚙️" href="/staff/oz/technical" />
-        <Tile title="Stage Reports" emoji="📝" href="/staff/oz/reports" />
+        <Tile title="Documents" emoji="📄" href="/staff/sw/documents" />
+        <Tile title="Contacts" emoji="📇" href="/staff/sw/contacts" />
+        <Tile title="Technical" emoji="⚙️" href="/staff/sw/technical" />
+        <Tile title="Stage Reports" emoji="📝" href="/staff/sw/reports" />
       </div>
     </main>
   );
