@@ -1,17 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { db } from "../../../../lib/firebaseConfig";
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+} from "firebase/firestore";
 
 type Announcement = {
   id: string;
   message: string;
-  createdAt: string;
+  createdAt: any; // Firestore Timestamp
 };
-
-const sampleAnnouncements: Announcement[] = [
-  { id: "1", message: "Snow White rehearsal at 2:00pm. Zoom: https://zoom.us/j/12345", createdAt: "2025-09-25 09:30" },
-  { id: "2", message: "Reminder: Tech fitting at wardrobe dept.", createdAt: "2025-09-24 11:00" },
-];
 
 // Function to render clickable links
 function renderMessage(msg: string) {
@@ -34,10 +38,26 @@ function renderMessage(msg: string) {
 }
 
 export default function AnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState(sampleAnnouncements);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
   const [newMsg, setNewMsg] = useState("");
+
+  // 🔥 Listen for announcements live
+  useEffect(() => {
+    const q = query(
+      collection(db, "announcements"),
+      orderBy("createdAt", "desc")
+    );
+    const unsub = onSnapshot(q, (snapshot) => {
+      const docs = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Announcement, "id">),
+      }));
+      setAnnouncements(docs as Announcement[]);
+    });
+    return () => unsub();
+  }, []);
 
   const handleCodeSubmit = () => {
     if (code === "5678") {
@@ -48,22 +68,23 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const handlePost = () => {
+  // 🔥 Post to Firestore
+  const handlePost = async () => {
     if (!newMsg.trim()) return;
-    const newAnnouncement: Announcement = {
-      id: Date.now().toString(),
+    await addDoc(collection(db, "announcements"), {
       message: newMsg,
-      createdAt: new Date().toLocaleString(),
-    };
-    setAnnouncements([newAnnouncement, ...announcements]); // newest first
+      createdAt: serverTimestamp(),
+    });
     setNewMsg("");
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
-      <h1 className="text-2xl font-bold text-center mb-6">Announcements – The Winter of Oz</h1>
+      <h1 className="text-2xl font-bold text-center mb-6">
+        Announcements – The Winter of Oz
+      </h1>
 
-      {/* Unlock + Post (compact version) */}
+      {/* Unlock + Post */}
       <div className="max-w-md mx-auto bg-black/40 p-3 rounded-lg border border-gray-700 mb-6">
         {!canPost ? (
           <div className="flex items-center gap-2">
@@ -103,9 +124,16 @@ export default function AnnouncementsPage() {
       {/* Feed – newest at top */}
       <div className="space-y-4 max-w-md mx-auto">
         {announcements.map((a) => (
-          <div key={a.id} className="bg-black/40 p-4 rounded-lg border border-gray-700">
+          <div
+            key={a.id}
+            className="bg-black/40 p-4 rounded-lg border border-gray-700"
+          >
             <p className="text-sm">{renderMessage(a.message)}</p>
-            <p className="text-xs text-gray-400 mt-2">{a.createdAt}</p>
+            <p className="text-xs text-gray-400 mt-2">
+              {a.createdAt?.toDate
+                ? a.createdAt.toDate().toLocaleString()
+                : "…"}
+            </p>
           </div>
         ))}
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "../../../lib/firebaseConfig"; // adjust path if needed
+import { db } from "../../../../lib/firebaseConfig"; // adjust path if needed
 import {
   collection,
   addDoc,
