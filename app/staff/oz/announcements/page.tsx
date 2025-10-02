@@ -15,7 +15,8 @@ import {
 type Announcement = {
   id: string;
   message: string;
-  createdAt: any;
+  createdAt?: any;         // Firestore server timestamp
+  createdAtClient?: any;   // Local fallback timestamp
   showId: string;
 };
 
@@ -39,18 +40,19 @@ function renderMessage(msg: string) {
 }
 
 export default function AnnouncementsPage() {
-  const showId = "oz"; // 🔥 static for Snow White
+  const showId = "oz"; // 👈 change per show (sw, aladdin, etc.)
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
   const [newMsg, setNewMsg] = useState("");
 
+  // 🔥 Listen for announcements for this show
   useEffect(() => {
     const q = query(
       collection(db, "announcements"),
       where("showId", "==", showId),
-      orderBy("createdAt", "desc")
+      orderBy("createdAtClient", "desc") // sort by client timestamp
     );
     const unsub = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map((doc) => ({
@@ -60,7 +62,7 @@ export default function AnnouncementsPage() {
       setAnnouncements(docs as Announcement[]);
     });
     return () => unsub();
-  }, []);
+  }, [showId]);
 
   const handleCodeSubmit = () => {
     if (code === "5678") {
@@ -71,22 +73,23 @@ export default function AnnouncementsPage() {
     }
   };
 
+  // 🔥 Post announcement (with dual timestamps)
   const handlePost = async () => {
-  if (!newMsg.trim()) return;
-  try {
-    const docRef = await addDoc(collection(db, "announcements"), {
-      message: newMsg,
-      createdAt: serverTimestamp(),
-      showId,
-    });
-    console.log("✅ Announcement posted with ID:", docRef.id);
-    setNewMsg("");
-    alert("✅ Announcement posted!");
-  } catch (err) {
-    console.error("❌ Error posting announcement:", err);
-    alert("Error posting announcement, check console.");
-  }
-};
+    if (!newMsg.trim()) return;
+    try {
+      const docRef = await addDoc(collection(db, "announcements"), {
+        message: newMsg,
+        createdAt: serverTimestamp(),
+        createdAtClient: new Date().toISOString(), // fallback
+        showId,
+      });
+      console.log("✅ Announcement posted with ID:", docRef.id);
+      setNewMsg("");
+    } catch (err) {
+      console.error("❌ Error posting announcement:", err);
+      alert("Error posting announcement, check console.");
+    }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
@@ -94,6 +97,7 @@ export default function AnnouncementsPage() {
         Announcements – The Winter of Oz
       </h1>
 
+      {/* Unlock + Post */}
       <div className="max-w-md mx-auto bg-black/40 p-3 rounded-lg border border-gray-700 mb-6">
         {!canPost ? (
           <div className="flex items-center gap-2">
@@ -130,6 +134,7 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
+      {/* Feed – newest first */}
       <div className="space-y-4 max-w-md mx-auto">
         {announcements.map((a) => (
           <div
@@ -140,7 +145,9 @@ export default function AnnouncementsPage() {
             <p className="text-xs text-gray-400 mt-2">
               {a.createdAt?.toDate
                 ? a.createdAt.toDate().toLocaleString()
-                : "…"}
+                : a.createdAtClient
+                ? new Date(a.createdAtClient).toLocaleString()
+                : "Just now"}
             </p>
           </div>
         ))}
