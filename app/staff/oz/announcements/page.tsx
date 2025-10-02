@@ -49,11 +49,23 @@ export default function AnnouncementsPage() {
 
   // 🔥 Listen for announcements for this show
   useEffect(() => {
-    const q = query(
-      collection(db, "announcements"),
-      where("showId", "==", showId),
-      orderBy("createdAtClient", "desc") // sort by client timestamp
-    );
+    let q;
+    try {
+      // Preferred: requires composite index
+      q = query(
+        collection(db, "announcements"),
+        where("showId", "==", showId),
+        orderBy("createdAtClient", "desc")
+      );
+    } catch (err) {
+      console.warn("⚠️ Falling back to unsorted query (index not ready):", err);
+      // Fallback: no orderBy, works without index
+      q = query(
+        collection(db, "announcements"),
+        where("showId", "==", showId)
+      );
+    }
+
     const unsub = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -61,6 +73,7 @@ export default function AnnouncementsPage() {
       }));
       setAnnouncements(docs as Announcement[]);
     });
+
     return () => unsub();
   }, [showId]);
 
