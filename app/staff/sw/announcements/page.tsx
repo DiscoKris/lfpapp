@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { db } from "../../../../lib/firebaseConfig"; // adjust path if needed
+import { db } from "../../../../../lib/firebaseConfig";
 import {
   collection,
   addDoc,
@@ -15,11 +15,10 @@ import {
 type Announcement = {
   id: string;
   message: string;
-  createdAt: any; // Firestore Timestamp
+  createdAt: any;
   showId: string;
 };
 
-// Function to render clickable links
 function renderMessage(msg: string) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return msg.split(urlRegex).map((part, i) =>
@@ -39,15 +38,14 @@ function renderMessage(msg: string) {
   );
 }
 
-export default function AnnouncementsPage({ params }: { params: { showId: string } }) {
-  const { showId } = params;
+export default function AnnouncementsPage() {
+  const showId = "sw"; // 🔥 static for Snow White
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
   const [newMsg, setNewMsg] = useState("");
 
-  // 🔥 Listen for announcements for this show
   useEffect(() => {
     const q = query(
       collection(db, "announcements"),
@@ -62,7 +60,7 @@ export default function AnnouncementsPage({ params }: { params: { showId: string
       setAnnouncements(docs as Announcement[]);
     });
     return () => unsub();
-  }, [showId]);
+  }, []);
 
   const handleCodeSubmit = () => {
     if (code === "5678") {
@@ -73,7 +71,6 @@ export default function AnnouncementsPage({ params }: { params: { showId: string
     }
   };
 
-  // 🔥 Post announcement for this show
   const handlePost = async () => {
     if (!newMsg.trim()) return;
     await addDoc(collection(db, "announcements"), {
@@ -87,10 +84,9 @@ export default function AnnouncementsPage({ params }: { params: { showId: string
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
       <h1 className="text-2xl font-bold text-center mb-6">
-        Announcements – {showId.toUpperCase()}
+        Announcements – Snow White
       </h1>
 
-      {/* Unlock + Post */}
       <div className="max-w-md mx-auto bg-black/40 p-3 rounded-lg border border-gray-700 mb-6">
         {!canPost ? (
           <div className="flex items-center gap-2">
@@ -127,7 +123,6 @@ export default function AnnouncementsPage({ params }: { params: { showId: string
         )}
       </div>
 
-      {/* Feed – newest at top */}
       <div className="space-y-4 max-w-md mx-auto">
         {announcements.map((a) => (
           <div

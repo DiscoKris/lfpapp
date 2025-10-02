@@ -6,6 +6,7 @@ import {
   collection,
   addDoc,
   query,
+  where,
   orderBy,
   onSnapshot,
   serverTimestamp,
@@ -14,10 +15,10 @@ import {
 type Announcement = {
   id: string;
   message: string;
-  createdAt: any; // Firestore Timestamp
+  createdAt: any;
+  showId: string;
 };
 
-// Function to render clickable links
 function renderMessage(msg: string) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   return msg.split(urlRegex).map((part, i) =>
@@ -38,15 +39,17 @@ function renderMessage(msg: string) {
 }
 
 export default function AnnouncementsPage() {
+  const showId = "oz"; // 🔥 static for Snow White
+
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
   const [newMsg, setNewMsg] = useState("");
 
-  // 🔥 Listen for announcements live
   useEffect(() => {
     const q = query(
       collection(db, "announcements"),
+      where("showId", "==", showId),
       orderBy("createdAt", "desc")
     );
     const unsub = onSnapshot(q, (snapshot) => {
@@ -68,12 +71,12 @@ export default function AnnouncementsPage() {
     }
   };
 
-  // 🔥 Post to Firestore
   const handlePost = async () => {
     if (!newMsg.trim()) return;
     await addDoc(collection(db, "announcements"), {
       message: newMsg,
       createdAt: serverTimestamp(),
+      showId,
     });
     setNewMsg("");
   };
@@ -84,7 +87,6 @@ export default function AnnouncementsPage() {
         Announcements – The Winter of Oz
       </h1>
 
-      {/* Unlock + Post */}
       <div className="max-w-md mx-auto bg-black/40 p-3 rounded-lg border border-gray-700 mb-6">
         {!canPost ? (
           <div className="flex items-center gap-2">
@@ -121,7 +123,6 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
-      {/* Feed – newest at top */}
       <div className="space-y-4 max-w-md mx-auto">
         {announcements.map((a) => (
           <div
