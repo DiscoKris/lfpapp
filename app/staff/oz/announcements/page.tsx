@@ -72,14 +72,21 @@ export default function AnnouncementsPage() {
   };
 
   const handlePost = async () => {
-    if (!newMsg.trim()) return;
-    await addDoc(collection(db, "announcements"), {
+  if (!newMsg.trim()) return;
+  try {
+    const docRef = await addDoc(collection(db, "announcements"), {
       message: newMsg,
       createdAt: serverTimestamp(),
       showId,
     });
+    console.log("✅ Announcement posted with ID:", docRef.id);
     setNewMsg("");
-  };
+    alert("✅ Announcement posted!");
+  } catch (err) {
+    console.error("❌ Error posting announcement:", err);
+    alert("Error posting announcement, check console.");
+  }
+};
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
