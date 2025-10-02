@@ -1,6 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { db, storage } from "@/lib/firebaseConfig";
+import {
+  collection,
+  addDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 type Contact = {
   role: string;
@@ -9,13 +20,15 @@ type Contact = {
 };
 
 type FileDoc = {
-  id: number;
+  id: string;
   name: string;
   url: string;
+  uploadedAt: string;
+  showId: string;
 };
 
 export default function AdminContactsPage() {
-  const [selectedShow, setSelectedShow] = useState("Peter Pan");
+  const [selectedShow, setSelectedShow] = useState("oz");
   const [contacts, setContacts] = useState<Contact[]>([
     { role: "Stage Manager", name: "", phone: "" },
     { role: "ASM", name: "", phone: "" },
@@ -25,8 +38,9 @@ export default function AdminContactsPage() {
   ]);
 
   const [documents, setDocuments] = useState<FileDoc[]>([]);
-  const [fileCounter, setFileCounter] = useState(1);
+  const [uploading, setUploading] = useState(false);
 
+  // 🔧 Handle contact changes
   const handleContactChange = (
     index: number,
     field: keyof Contact,
@@ -37,26 +51,75 @@ export default function AdminContactsPage() {
     setContacts(updated);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFile = e.target.files[0];
-      const newDoc: FileDoc = {
-        id: fileCounter,
-        name: newFile.name,
-        url: URL.createObjectURL(newFile),
-      };
-      setDocuments((prev) => [...prev, newDoc]);
-      setFileCounter(fileCounter + 1);
+  // 🔧 Handle file upload to Firebase Storage
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    setUploading(true);
+
+    try {
+      // Upload to Storage
+      const storageRef = ref(storage, `contactDocs/${selectedShow}/${file.name}`);
+      await uploadBytes(storageRef, file);
+
+      // Get public URL
+      const url = await getDownloadURL(storageRef);
+
+      // Save metadata to Firestore
+      const docRef = await addDoc(collection(db, "contactDocs"), {
+        name: file.name,
+        url,
+        uploadedAt: new Date().toISOString(),
+        showId: selectedShow,
+      });
+
+      setDocuments((prev) => [
+        ...prev,
+        { id: docRef.id, name: file.name, url, uploadedAt: new Date().toISOString(), showId: selectedShow },
+      ]);
+    } catch (err) {
+      console.error("❌ Error uploading file:", err);
+      alert("Error uploading file, check console");
+    }
+
+    setUploading(false);
+  };
+
+  // 🔧 Delete a file from Firestore
+  const handleDeleteFile = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "contactDocs", id));
+      setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+    } catch (err) {
+      console.error("❌ Error deleting file:", err);
     }
   };
 
-  const handleDeleteFile = (id: number) => {
-    setDocuments((prev) => prev.filter((doc) => doc.id !== id));
-  };
+  // 🔧 Save all contacts to Firestore
+  const handleSave = async () => {
+    try {
+      // First clear old contacts for this show
+      const q = query(collection(db, "contacts"), where("showId", "==", selectedShow));
+      const snapshot = await getDocs(q);
+      snapshot.forEach(async (d) => {
+        await deleteDoc(doc(db, "contacts", d.id));
+      });
 
-  const handleSave = () => {
-    console.log("Saving contacts:", { selectedShow, contacts, documents });
-    alert("Contacts and files saved!");
+      // Add new contacts
+      for (const c of contacts) {
+        if (c.name.trim() && c.phone.trim()) {
+          await addDoc(collection(db, "contacts"), {
+            ...c,
+            showId: selectedShow,
+          });
+        }
+      }
+
+      alert("✅ Contacts saved!");
+    } catch (err) {
+      console.error("❌ Error saving contacts:", err);
+      alert("Error saving contacts, check console");
+    }
   };
 
   return (
@@ -80,10 +143,11 @@ export default function AdminContactsPage() {
           onChange={(e) => setSelectedShow(e.target.value)}
           className="w-full mb-6 p-2 rounded bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
         >
-          <option>Peter Pan</option>
-          <option>Snow White</option>
-          <option>Aladdin</option>
-          <option>Sleeping Beauty</option>
+          <option value="oz">Oz</option>
+          <option value="sw">Snow White</option>
+          <option value="aladdin">Aladdin</option>
+          <option value="peterpan">Peter Pan</option>
+          <option value="sb">Sleeping Beauty</option>
         </select>
 
         {/* Key Contacts */}
@@ -95,7 +159,6 @@ export default function AdminContactsPage() {
               className="flex flex-col gap-2 bg-black/40 p-3 rounded-lg"
             >
               <p className="font-medium">{contact.role}</p>
-
               <div className="flex gap-3">
                 <input
                   type="text"
@@ -106,7 +169,6 @@ export default function AdminContactsPage() {
                   }
                   className="flex-1 min-w-0 rounded px-2 py-1 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600"
                 />
-
                 <input
                   type="text"
                   placeholder="Phone"
@@ -114,7 +176,7 @@ export default function AdminContactsPage() {
                   onChange={(e) =>
                     handleContactChange(index, "phone", e.target.value)
                   }
-                  className="w-28 rounded px-2 py-1 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  className="w-32 rounded px-2 py-1 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600"
                 />
               </div>
             </div>
@@ -127,6 +189,7 @@ export default function AdminContactsPage() {
           type="file"
           accept="application/pdf"
           onChange={handleFileUpload}
+          disabled={uploading}
           className="mb-4 text-white"
         />
 
