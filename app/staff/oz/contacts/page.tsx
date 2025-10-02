@@ -42,7 +42,10 @@ export default function ContactsPage() {
     const q1 = query(collection(db, "contacts"), where("showId", "==", showId));
     const unsub1 = onSnapshot(q1, (snapshot) => {
       setKeyContacts(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as KeyContact) }))
+        snapshot.docs.map((doc) => {
+          const data = doc.data() as Omit<KeyContact, "id">;
+          return { ...data, id: doc.id };
+        })
       );
     });
 
@@ -50,7 +53,10 @@ export default function ContactsPage() {
     const q2 = query(collection(db, "contactDocs"), where("showId", "==", showId));
     const unsub2 = onSnapshot(q2, (snapshot) => {
       setContactDocs(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...(doc.data() as ContactDoc) }))
+        snapshot.docs.map((doc) => {
+          const data = doc.data() as Omit<ContactDoc, "id">;
+          return { ...data, id: doc.id };
+        })
       );
     });
 
@@ -76,10 +82,7 @@ export default function ContactsPage() {
             <span className="font-semibold">{c.role}:</span>
             <span>
               {c.name}{" "}
-              <a
-                href={`tel:${c.phone}`}
-                className="text-blue-400 underline"
-              >
+              <a href={`tel:${c.phone}`} className="text-blue-400 underline">
                 {formatPhone(c.phone)}
               </a>
             </span>
