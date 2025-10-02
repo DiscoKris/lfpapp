@@ -20,23 +20,29 @@ type Announcement = {
   showId: string;
 };
 
+// 🔧 Improved link rendering
 function renderMessage(msg: string) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return msg.split(urlRegex).map((part, i) =>
-    urlRegex.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-red-400 underline hover:text-red-300"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    )
-  );
+  // Matches http(s):// links OR www. links
+  const urlRegex = /((https?:\/\/[^\s]+)|(www\.[^\s]+))/g;
+
+  return msg.split(urlRegex).map((part, i) => {
+    if (!part) return null;
+    if (urlRegex.test(part)) {
+      const href = part.startsWith("www.") ? `https://${part}` : part;
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-red-400 underline hover:text-red-300"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 export default function AnnouncementsPage() {
@@ -51,7 +57,7 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     let q;
     try {
-      // Preferred: requires composite index
+      // Preferred query (requires index)
       q = query(
         collection(db, "announcements"),
         where("showId", "==", showId),
@@ -59,11 +65,7 @@ export default function AnnouncementsPage() {
       );
     } catch (err) {
       console.warn("⚠️ Falling back to unsorted query (index not ready):", err);
-      // Fallback: no orderBy, works without index
-      q = query(
-        collection(db, "announcements"),
-        where("showId", "==", showId)
-      );
+      q = query(collection(db, "announcements"), where("showId", "==", showId));
     }
 
     const unsub = onSnapshot(q, (snapshot) => {

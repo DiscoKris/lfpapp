@@ -20,23 +20,29 @@ type Announcement = {
   showId: string;
 };
 
+// 🔧 Improved link rendering
 function renderMessage(msg: string) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  return msg.split(urlRegex).map((part, i) =>
-    urlRegex.test(part) ? (
-      <a
-        key={i}
-        href={part}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-red-400 underline hover:text-red-300"
-      >
-        {part}
-      </a>
-    ) : (
-      part
-    )
-  );
+  // Matches http(s):// links OR www. links
+  const urlRegex = /((https?:\/\/[^\s]+)|(www\.[^\s]+))/g;
+
+  return msg.split(urlRegex).map((part, i) => {
+    if (!part) return null;
+    if (urlRegex.test(part)) {
+      const href = part.startsWith("www.") ? `https://${part}` : part;
+      return (
+        <a
+          key={i}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-red-400 underline hover:text-red-300"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 }
 
 export default function AnnouncementsPage() {
@@ -49,11 +55,19 @@ export default function AnnouncementsPage() {
 
   // 🔥 Listen for announcements for this show
   useEffect(() => {
-    const q = query(
-      collection(db, "announcements"),
-      where("showId", "==", showId),
-      orderBy("createdAtClient", "desc") // sort by client timestamp
-    );
+    let q;
+    try {
+      // Preferred query (requires index)
+      q = query(
+        collection(db, "announcements"),
+        where("showId", "==", showId),
+        orderBy("createdAtClient", "desc")
+      );
+    } catch (err) {
+      console.warn("⚠️ Falling back to unsorted query (index not ready):", err);
+      q = query(collection(db, "announcements"), where("showId", "==", showId));
+    }
+
     const unsub = onSnapshot(q, (snapshot) => {
       const docs = snapshot.docs.map((doc) => ({
         id: doc.id,
@@ -61,6 +75,7 @@ export default function AnnouncementsPage() {
       }));
       setAnnouncements(docs as Announcement[]);
     });
+
     return () => unsub();
   }, [showId]);
 
@@ -94,7 +109,7 @@ export default function AnnouncementsPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
       <h1 className="text-2xl font-bold text-center mb-6">
-        Announcements – Snow White Christmas
+        Announcements – A Snow White Christmas
       </h1>
 
       {/* Unlock + Post */}
