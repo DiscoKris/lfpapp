@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { auth } from "../../../lib/firebaseConfig";
+import { useEffect, useState } from "react";
+import { auth, db } from "../../../lib/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Tile from "../../../components/Tile";
 import Image from "next/image";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
 export default function OzStaffPage() {
   const router = useRouter();
+  const [announcementCount, setAnnouncementCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -18,7 +20,20 @@ export default function OzStaffPage() {
       // }
       console.log("Staff OZ Auth check:", user ? "Logged in" : "Not logged in");
     });
-    return () => unsubscribe();
+
+    // 🔥 Listen for OZ announcements count
+    const q = query(
+      collection(db, "announcements"),
+      where("showId", "==", "oz")
+    );
+    const unsubAnnouncements = onSnapshot(q, (snapshot) => {
+      setAnnouncementCount(snapshot.size);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubAnnouncements();
+    };
   }, [router]);
 
   return (
@@ -42,12 +57,11 @@ export default function OzStaffPage() {
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
         <Tile title="Schedules" emoji="📅" href="/staff/oz/schedules" />
         <Tile
-  title="Announcements"
-  emoji="📢"
-  href="/staff/oz/announcements"
-  badgeCount={2} // temporary hardcode until Firestore is hooked up
-/>
-
+          title="Announcements"
+          emoji="📢"
+          href="/staff/oz/announcements"
+          badgeCount={announcementCount}
+        />
         <Tile title="Documents" emoji="📄" href="/staff/oz/documents" />
         <Tile title="Contacts" emoji="📇" href="/staff/oz/contacts" />
         <Tile title="Technical" emoji="⚙️" href="/staff/oz/technical" />

@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
-import { auth } from "../../../lib/firebaseConfig";
+import { useEffect, useState } from "react";
+import { auth, db } from "../../../lib/firebaseConfig";
 import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Tile from "../../../components/Tile";
 import Image from "next/image";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
-export default function swStaffPage() {
+export default function OzStaffPage() {
   const router = useRouter();
+  const [announcementCount, setAnnouncementCount] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -18,7 +20,20 @@ export default function swStaffPage() {
       // }
       console.log("Staff SW Auth check:", user ? "Logged in" : "Not logged in");
     });
-    return () => unsubscribe();
+
+    // 🔥 Listen for SW announcements count
+    const q = query(
+      collection(db, "announcements"),
+      where("showId", "==", "sw")
+    );
+    const unsubAnnouncements = onSnapshot(q, (snapshot) => {
+      setAnnouncementCount(snapshot.size);
+    });
+
+    return () => {
+      unsubscribe();
+      unsubAnnouncements();
+    };
   }, [router]);
 
   return (
@@ -27,9 +42,9 @@ export default function swStaffPage() {
       <div className="flex flex-col items-center mb-8">
         <Image
           src="/sw_logo.png"
-          alt="A Snow WHite Christmas"
-          width={300}
-          height={300}
+          alt="A Snow White Christmas"
+          width={180}
+          height={100}
           className="object-contain mb-2 drop-shadow-lg"
         />
         <p className="text-lg font-medium">The Laguna Playhouse</p>
@@ -40,18 +55,17 @@ export default function swStaffPage() {
 
       {/* Tiles Grid */}
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Schedules" emoji="📅" href="/staff/sw/schedules" />
+        <Tile title="Schedules" emoji="📅" href="/staff/oz/schedules" />
         <Tile
-  title="Announcements"
-  emoji="📢"
-  href="/staff/sw/announcements"
-  badgeCount={2} // temporary hardcode until Firestore is hooked up
-/>
-
-        <Tile title="Documents" emoji="📄" href="/staff/sw/documents" />
-        <Tile title="Contacts" emoji="📇" href="/staff/sw/contacts" />
-        <Tile title="Technical" emoji="⚙️" href="/staff/sw/technical" />
-        <Tile title="Stage Reports" emoji="📝" href="/staff/sw/reports" />
+          title="Announcements"
+          emoji="📢"
+          href="/staff/oz/announcements"
+          badgeCount={announcementCount}
+        />
+        <Tile title="Documents" emoji="📄" href="/staff/oz/documents" />
+        <Tile title="Contacts" emoji="📇" href="/staff/oz/contacts" />
+        <Tile title="Technical" emoji="⚙️" href="/staff/oz/technical" />
+        <Tile title="Stage Reports" emoji="📝" href="/staff/oz/reports" />
       </div>
     </main>
   );
