@@ -22,14 +22,14 @@ type ContactDoc = {
 };
 
 // 🔧 Format phone for display (keeps it nice-looking)
-function formatPhone(phone: string): string {
-  // If it starts with +1 (US), display as (XXX) XXX-XXXX
+function formatPhone(phone?: string): string {
+  if (!phone) return ""; // <- no crash if undefined/null
   if (phone.startsWith("+1") && phone.length === 12) {
     return `(${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8)}`;
   }
-  // Otherwise just return as-is
   return phone;
 }
+
 
 export default function ContactsPage() {
   const showId = "sw"; // 👈 change per show
