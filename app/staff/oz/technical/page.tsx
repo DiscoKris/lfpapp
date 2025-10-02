@@ -1,33 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ref, listAll, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebaseConfig";
+import { db } from "@/lib/firebaseConfig";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
-export default function StaffOZPage() {
-  const [schedules, setSchedules] = useState<{ name: string; url: string }[]>([]);
+type FileDoc = {
+  id: string;
+  name: string;
+  url: string;
+  uploadedAt: string;
+  showId: string;
+};
+
+export default function StaffOzTechnicalPage() {
+  const showId = "oz";
+  const [files, setFiles] = useState<FileDoc[]>([]);
 
   useEffect(() => {
-    async function fetchSchedules() {
-      try {
-        const folderRef = ref(storage, "staff/oz/technical");
-        const res = await listAll(folderRef);
-
-        const files = await Promise.all(
-          res.items.map(async (itemRef) => ({
-            name: itemRef.name,
-            url: await getDownloadURL(itemRef),
-          }))
-        );
-
-        setSchedules(files);
-      } catch (err) {
-        console.error("Error loading Documents:", err);
-      }
-    }
-
-    fetchSchedules();
-  }, []);
+    const q = query(collection(db, "technical"), where("showId", "==", showId));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setFiles(
+        snapshot.docs.map((docSnap) => {
+          const data = docSnap.data() as Omit<FileDoc, "id">;
+          return { ...data, id: docSnap.id };
+        })
+      );
+    });
+    return () => unsub();
+  }, [showId]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
@@ -35,18 +35,18 @@ export default function StaffOZPage() {
         Technical – The Winter of Oz
       </h1>
 
-      {schedules.length === 0 ? (
-        <p className="text-center text-gray-300">No Documents uploaded yet.</p>
+      {files.length === 0 ? (
+        <p className="text-center text-gray-300">No technical docs uploaded yet.</p>
       ) : (
         <ul className="space-y-4 max-w-md mx-auto">
-          {schedules.map((file) => (
+          {files.map((f) => (
             <li
-              key={file.name}
+              key={f.id}
               className="bg-white/10 p-4 rounded-xl flex justify-between items-center"
             >
-              <span>{file.name}</span>
+              <span>{f.name}</span>
               <a
-                href={file.url}
+                href={f.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="bg-red-700 px-4 py-2 rounded hover:bg-red-600"
