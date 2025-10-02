@@ -18,19 +18,18 @@ type ReportDoc = {
   id: string;
   name: string;
   url: string;
-  uploadedAt: string;
+  uploadedAt?: any;
   showId: string;
 };
 
 export default function ReportsPage() {
-  const showId = "oz"; // 👈 per show
+  const showId = "oz"; // 👈 change for sw, aladdin, etc.
   const [reports, setReports] = useState<ReportDoc[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState("");
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
 
-  // 🔥 Listen for reports
   useEffect(() => {
     const q = query(collection(db, "reports"), where("showId", "==", showId));
     const unsub = onSnapshot(q, (snapshot) => {
@@ -66,7 +65,7 @@ export default function ReportsPage() {
       await addDoc(collection(db, "reports"), {
         name: file.name,
         url,
-        uploadedAt: new Date().toISOString(),
+        uploadedAt: serverTimestamp(),
         showId,
       });
 
@@ -80,13 +79,9 @@ export default function ReportsPage() {
 
   const handleDelete = async (report: ReportDoc) => {
     try {
-      // Delete from Storage
       const storageRef = ref(storage, `staff/${showId}/reports/${report.name}`);
       await deleteObject(storageRef);
-
-      // Delete from Firestore
       await deleteDoc(doc(db, "reports", report.id));
-
       setStatus("🗑️ Report deleted.");
     } catch (err) {
       console.error("❌ Error deleting report:", err);
@@ -100,7 +95,7 @@ export default function ReportsPage() {
         Reports – The Winter of Oz
       </h1>
 
-      {/* Upload (code protected) */}
+      {/* Unlock + Upload */}
       <div className="max-w-md mx-auto bg-black/40 p-3 rounded-lg border border-gray-700 mb-6">
         {!canPost ? (
           <div className="flex items-center gap-2">
@@ -152,7 +147,10 @@ export default function ReportsPage() {
               <div>
                 <p className="font-medium">{r.name}</p>
                 <p className="text-xs text-gray-400">
-                  Uploaded: {new Date(r.uploadedAt).toLocaleString()}
+                  Uploaded:{" "}
+                  {r.uploadedAt?.toDate
+                    ? r.uploadedAt.toDate().toLocaleString()
+                    : "…"}
                 </p>
               </div>
               <div className="flex gap-2">
