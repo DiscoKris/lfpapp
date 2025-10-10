@@ -1,47 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ref, listAll, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebaseConfig";
+import { db } from "@/lib/firebaseConfig";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 
-export default function StaffSnowWhitePage() {
-  const [schedules, setSchedules] = useState<{ name: string; url: string }[]>([]);
+type FileDoc = {
+  id: string;
+  name: string;
+  url: string;
+  uploadedAt: string;
+  showId: string;
+};
+
+export default function StaffSwDocumentsPage() {
+  const showId = "sw";
+  const [documents, setDocuments] = useState<FileDoc[]>([]);
 
   useEffect(() => {
-    async function fetchSchedules() {
-      try {
-        const folderRef = ref(storage, "staff/sw/documents");
-        const res = await listAll(folderRef);
-
-        const files = await Promise.all(
-          res.items.map(async (itemRef) => ({
-            name: itemRef.name,
-            url: await getDownloadURL(itemRef),
-          }))
-        );
-
-        setSchedules(files);
-      } catch (err) {
-        console.error("Error loading schedules:", err);
-      }
-    }
-
-    fetchSchedules();
-  }, []);
+    const q = query(collection(db, "documents"), where("showId", "==", showId));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setDocuments(
+        snapshot.docs.map((docSnap) => {
+          const data = docSnap.data() as Omit<FileDoc, "id">;
+          return { ...data, id: docSnap.id };
+        })
+      );
+    });
+    return () => unsub();
+  }, [showId]);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
       <h1 className="text-3xl font-bold text-center mb-8">
-        Documents – Snow White
+        Documents – A Snow White Christmas
       </h1>
 
-      {schedules.length === 0 ? (
+      {documents.length === 0 ? (
         <p className="text-center text-gray-300">No documents uploaded yet.</p>
       ) : (
         <ul className="space-y-4 max-w-md mx-auto">
-          {schedules.map((file) => (
+          {documents.map((file) => (
             <li
-              key={file.name}
+              key={file.id}
               className="bg-white/10 p-4 rounded-xl flex justify-between items-center"
             >
               <span>{file.name}</span>
