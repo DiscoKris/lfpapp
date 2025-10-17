@@ -22,6 +22,8 @@ type FileDoc = {
   showId: string;
 };
 
+const pageType = "technical"; // keep this one-liner so the path and collection stay consistent
+
 export default function AdminTechnicalPage() {
   const [selectedShow, setSelectedShow] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -29,9 +31,17 @@ export default function AdminTechnicalPage() {
   const [files, setFiles] = useState<FileDoc[]>([]);
   const [uploading, setUploading] = useState(false);
 
+  // Auto-clear status after a few seconds
+  useEffect(() => {
+    if (!status) return;
+    const t = setTimeout(() => setStatus(""), 3000);
+    return () => clearTimeout(t);
+  }, [status]);
+
+  // Fetch technical docs for selected show
   useEffect(() => {
     if (!selectedShow) return;
-    const q = query(collection(db, "technical"), where("showId", "==", selectedShow));
+    const q = query(collection(db, pageType), where("showId", "==", selectedShow));
     const unsub = onSnapshot(q, (snapshot) => {
       setFiles(
         snapshot.docs.map((docSnap) => {
@@ -45,16 +55,26 @@ export default function AdminTechnicalPage() {
 
   const handleUpload = async () => {
     if (!selectedShow || !file) {
-      setStatus("⚠️ Please select a show and choose a file.");
+      setStatus("⚠️ Please select a show and choose a PDF file.");
       return;
     }
+    if (file.type !== "application/pdf") {
+      setStatus("❌ Only PDF files are allowed.");
+      return;
+    }
+
     setUploading(true);
     try {
-      const storageRef = ref(storage, `staff/${selectedShow}/technical/${file.name}`);
+      // Upload to Storage
+      const storagePath = `staff/${selectedShow}/${pageType}/${file.name}`;
+      const storageRef = ref(storage, storagePath);
+      console.log("[UPLOAD] ->", storagePath);
+
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      await addDoc(collection(db, "technical"), {
+      // Create Firestore record
+      await addDoc(collection(db, pageType), {
         name: file.name,
         url,
         uploadedAt: new Date().toISOString(),
@@ -72,19 +92,36 @@ export default function AdminTechnicalPage() {
 
   const handleDelete = async (docId: string, fileName: string) => {
     try {
-      const storageRef = ref(storage, `staff/${selectedShow}/technical/${fileName}`);
-      await deleteObject(storageRef);
-      await deleteDoc(doc(db, "technical", docId));
+      const storagePath = `staff/${selectedShow}/${pageType}/${fileName}`;
+      const storageRef = ref(storage, storagePath);
+      console.log("[DELETE] ->", storagePath);
+
+      // Try to delete Storage file, but continue if it does not exist
+      await deleteObject(storageRef).catch((err: any) => {
+        // If the file was already removed manually, skip and still delete Firestore
+        if (err?.code === "storage/object-not-found") {
+          console.warn("⚠️ File not found in Storage, skipping Storage delete.");
+          return;
+        }
+        // If it is a different error, rethrow
+        throw err;
+      });
+
+      // Always delete the Firestore doc, even if Storage file was missing
+      await deleteDoc(doc(db, pageType, docId));
+
       setStatus("🗑️ File deleted successfully!");
     } catch (err) {
       console.error("❌ Delete error:", err);
-      setStatus("❌ Error deleting file.");
+      setStatus("❌ Error deleting file. Check console for details.");
     }
   };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white px-6 py-10">
       <h1 className="text-3xl font-bold text-center mb-8">Admin – Technical</h1>
+
+      {/* Show Selector */}
       <AdminShowSelect onSelect={setSelectedShow} />
 
       {selectedShow && (
@@ -110,6 +147,7 @@ export default function AdminTechnicalPage() {
 
           {status && <p className="mt-4 text-sm">{status}</p>}
 
+          {/* Uploaded files list */}
           <div className="mt-6 space-y-3">
             {files.length === 0 && (
               <p className="text-sm opacity-70">No technical files uploaded yet.</p>
