@@ -6,32 +6,44 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Tile from "../../../components/Tile";
 import Image from "next/image";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
-export default function OzStaffPage() {
+export default function SnowWhiteStaffPage() {
   const router = useRouter();
-  const [announcementCount, setAnnouncementCount] = useState(0);
+  const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // 🚨 Auth check temporarily disabled for testing
-      // if (!user) {
-      //   router.push("/"); // redirect to login if not logged in
-      // }
+    // ✅ Optional auth check (can re-enable later)
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       console.log("Staff SW Auth check:", user ? "Logged in" : "Not logged in");
     });
 
-    // 🔥 Listen for SW announcements count
+    // 🔥 Listen to the latest announcement for Snow White
     const q = query(
       collection(db, "announcements"),
-      where("showId", "==", "sw")
+      where("showId", "==", "sw"),
+      orderBy("createdAtClient", "desc")
     );
+
     const unsubAnnouncements = onSnapshot(q, (snapshot) => {
-      setAnnouncementCount(snapshot.size);
+      if (!snapshot.empty) {
+        const latest = snapshot.docs[0].data() as any;
+        const latestTime = new Date(latest.createdAtClient).getTime();
+
+        const lastViewed = localStorage.getItem("lastViewedAnnouncements_sw");
+        const lastViewedTime = lastViewed ? new Date(lastViewed).getTime() : 0;
+
+        // Show “NEW” if latest announcement is newer than last viewed
+        if (latestTime > lastViewedTime) {
+          setHasNewAnnouncement(true);
+        } else {
+          setHasNewAnnouncement(false);
+        }
+      }
     });
 
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
       unsubAnnouncements();
     };
   }, [router]);
@@ -47,7 +59,7 @@ export default function OzStaffPage() {
           height={100}
           className="object-contain mb-2 drop-shadow-lg"
         />
-        <p className="text-lg font-medium">The Laguna Playhouse</p>
+        <p className="text-lg font-medium">Laguna Playhouse</p>
       </div>
 
       {/* Dashboard Heading */}
@@ -60,7 +72,7 @@ export default function OzStaffPage() {
           title="Announcements"
           emoji="📢"
           href="/staff/sw/announcements"
-          badgeCount={announcementCount}
+          showNew={hasNewAnnouncement}
         />
         <Tile title="Documents" emoji="📄" href="/staff/sw/documents" />
         <Tile title="Contacts" emoji="📇" href="/staff/sw/contacts" />
