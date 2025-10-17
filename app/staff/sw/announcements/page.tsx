@@ -5,6 +5,8 @@ import { db } from "@/lib/firebaseConfig";
 import {
   collection,
   addDoc,
+  deleteDoc,
+  doc,
   query,
   where,
   orderBy,
@@ -15,16 +17,13 @@ import {
 type Announcement = {
   id: string;
   message: string;
-  createdAt?: any;         // Firestore server timestamp
-  createdAtClient?: any;   // Local fallback timestamp
+  createdAt?: any;
+  createdAtClient?: any;
   showId: string;
 };
 
-// 🔧 Improved link rendering
 function renderMessage(msg: string) {
-  // Matches http(s):// links OR www. links
   const urlRegex = /((https?:\/\/[^\s]+)|(www\.[^\s]+))/g;
-
   return msg.split(urlRegex).map((part, i) => {
     if (!part) return null;
     if (urlRegex.test(part)) {
@@ -46,32 +45,30 @@ function renderMessage(msg: string) {
 }
 
 export default function AnnouncementsPage() {
-  const showId = "sw"; // 👈 change per show (sw, aladdin, etc.)
+  const showId = "sw";
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
   const [newMsg, setNewMsg] = useState("");
 
-  // 🔥 Listen for announcements for this show
+  // Fetch announcements
   useEffect(() => {
     let q;
     try {
-      // Preferred query (requires index)
       q = query(
         collection(db, "announcements"),
         where("showId", "==", showId),
         orderBy("createdAtClient", "desc")
       );
-    } catch (err) {
-      console.warn("⚠️ Falling back to unsorted query (index not ready):", err);
+    } catch {
       q = query(collection(db, "announcements"), where("showId", "==", showId));
     }
 
     const unsub = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Announcement, "id">),
+      const docs = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...(docSnap.data() as Omit<Announcement, "id">),
       }));
       setAnnouncements(docs as Announcement[]);
     });
@@ -88,21 +85,30 @@ export default function AnnouncementsPage() {
     }
   };
 
-  // 🔥 Post announcement (with dual timestamps)
   const handlePost = async () => {
     if (!newMsg.trim()) return;
     try {
-      const docRef = await addDoc(collection(db, "announcements"), {
+      await addDoc(collection(db, "announcements"), {
         message: newMsg,
         createdAt: serverTimestamp(),
-        createdAtClient: new Date().toISOString(), // fallback
+        createdAtClient: new Date().toISOString(),
         showId,
       });
-      console.log("✅ Announcement posted with ID:", docRef.id);
       setNewMsg("");
     } catch (err) {
       console.error("❌ Error posting announcement:", err);
-      alert("Error posting announcement, check console.");
+      alert("Error posting announcement.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this announcement?")) return;
+    try {
+      await deleteDoc(doc(db, "announcements", id));
+      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error("❌ Error deleting:", err);
+      alert("Error deleting announcement.");
     }
   };
 
@@ -141,7 +147,7 @@ export default function AnnouncementsPage() {
             />
             <button
               onClick={handlePost}
-              className="w-full bg-green-700 py-2 rounded hover:bg-green-600 text-sm"
+              className="w-full bg-green-700 py-2 rounded hover:bg-green-600 text-sm mb-2"
             >
               Post Announcement
             </button>
@@ -149,14 +155,14 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
-      {/* Feed – newest first */}
+      {/* Feed */}
       <div className="space-y-4 max-w-md mx-auto">
         {announcements.map((a) => (
           <div
             key={a.id}
             className="bg-black/40 p-4 rounded-lg border border-gray-700"
           >
-            <p className="text-sm">{renderMessage(a.message)}</p>
+            <p className="text-sm break-words">{renderMessage(a.message)}</p>
             <p className="text-xs text-gray-400 mt-2">
               {a.createdAt?.toDate
                 ? a.createdAt.toDate().toLocaleString()
@@ -164,6 +170,16 @@ export default function AnnouncementsPage() {
                 ? new Date(a.createdAtClient).toLocaleString()
                 : "Just now"}
             </p>
+
+            {/* 🗑️ Delete button clearly visible */}
+            {canPost && (
+              <button
+                onClick={() => handleDelete(a.id)}
+                className="mt-3 w-full bg-red-700 hover:bg-red-600 text-sm py-1 rounded"
+              >
+                🗑️ Delete this announcement
+              </button>
+            )}
           </div>
         ))}
       </div>
