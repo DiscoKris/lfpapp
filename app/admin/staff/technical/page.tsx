@@ -22,7 +22,7 @@ type FileDoc = {
   showId: string;
 };
 
-const pageType = "technical"; // keep this one-liner so the path and collection stay consistent
+const pageType = "technical"; // used for consistency
 
 export default function AdminTechnicalPage() {
   const [selectedShow, setSelectedShow] = useState("");
@@ -31,7 +31,7 @@ export default function AdminTechnicalPage() {
   const [files, setFiles] = useState<FileDoc[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // Auto-clear status after a few seconds
+  // Auto-clear status
   useEffect(() => {
     if (!status) return;
     const t = setTimeout(() => setStatus(""), 3000);
@@ -55,9 +55,10 @@ export default function AdminTechnicalPage() {
 
   const handleUpload = async () => {
     if (!selectedShow || !file) {
-      setStatus("⚠️ Please select a show and choose a PDF file.");
+      setStatus("⚠️ Please select a show and choose a file.");
       return;
     }
+
     if (file.type !== "application/pdf") {
       setStatus("❌ Only PDF files are allowed.");
       return;
@@ -65,15 +66,13 @@ export default function AdminTechnicalPage() {
 
     setUploading(true);
     try {
-      // Upload to Storage
       const storagePath = `staff/${selectedShow}/${pageType}/${file.name}`;
       const storageRef = ref(storage, storagePath);
-      console.log("[UPLOAD] ->", storagePath);
+      console.log("[UPLOAD] →", storagePath);
 
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
 
-      // Create Firestore record
       await addDoc(collection(db, pageType), {
         name: file.name,
         url,
@@ -92,22 +91,25 @@ export default function AdminTechnicalPage() {
 
   const handleDelete = async (docId: string, fileName: string) => {
     try {
-      const storagePath = `staff/${selectedShow}/${pageType}/${fileName}`;
-      const storageRef = ref(storage, storagePath);
-      console.log("[DELETE] ->", storagePath);
+      // ensure .pdf extension exists in path
+      let storagePath = `staff/${selectedShow}/${pageType}/${fileName}`;
+      if (!fileName.toLowerCase().endsWith(".pdf")) {
+        storagePath += ".pdf";
+      }
 
-      // Try to delete Storage file, but continue if it does not exist
+      const storageRef = ref(storage, storagePath);
+      console.log("[DELETE] →", storagePath);
+
+      // try deleting file; if missing, still remove Firestore doc
       await deleteObject(storageRef).catch((err: any) => {
-        // If the file was already removed manually, skip and still delete Firestore
-        if (err?.code === "storage/object-not-found") {
-          console.warn("⚠️ File not found in Storage, skipping Storage delete.");
-          return;
+        if (err.code === "storage/object-not-found") {
+          console.warn("⚠️ File not found in Storage, skipping delete.");
+        } else {
+          throw err;
         }
-        // If it is a different error, rethrow
-        throw err;
       });
 
-      // Always delete the Firestore doc, even if Storage file was missing
+      // delete Firestore record regardless
       await deleteDoc(doc(db, pageType, docId));
 
       setStatus("🗑️ File deleted successfully!");
@@ -147,7 +149,7 @@ export default function AdminTechnicalPage() {
 
           {status && <p className="mt-4 text-sm">{status}</p>}
 
-          {/* Uploaded files list */}
+          {/* Uploaded files */}
           <div className="mt-6 space-y-3">
             {files.length === 0 && (
               <p className="text-sm opacity-70">No technical files uploaded yet.</p>

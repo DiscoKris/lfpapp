@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { db, storage } from "@/lib/firebaseConfig";
 import {
   collection,
   addDoc,
+  setDoc,
   deleteDoc,
   doc,
   query,
   where,
   getDocs,
+  onSnapshot,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
 type Contact = {
   role: string;
@@ -36,36 +38,75 @@ export default function AdminContactsPage() {
     { role: "Producer", name: "", phone: "" },
     { role: "Theatre", name: "", phone: "" },
   ]);
-
   const [documents, setDocuments] = useState<FileDoc[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState("");
 
-  // 🔧 Handle contact changes
-  const handleContactChange = (
-    index: number,
-    field: keyof Contact,
-    value: string
-  ) => {
+  // 🧭 Load existing contact PDFs in real time
+  useEffect(() => {
+    if (!selectedShow) return;
+    const q = query(collection(db, "contactDocs"), where("showId", "==", selectedShow));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setDocuments(
+        snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Omit<FileDoc, "id">),
+        }))
+      );
+    });
+    return () => unsub();
+  }, [selectedShow]);
+
+  // 🧭 Load existing contacts from Firestore
+  useEffect(() => {
+    if (!selectedShow) return;
+    const fetchContacts = async () => {
+      const q = query(collection(db, "contacts"), where("showId", "==", selectedShow));
+      const snapshot = await getDocs(q);
+
+      // Keep base structure with empty fields, but merge data
+      const defaultContacts = [
+        { role: "Stage Manager", name: "", phone: "" },
+        { role: "ASM", name: "", phone: "" },
+        { role: "Company Manager", name: "", phone: "" },
+        { role: "Producer", name: "", phone: "" },
+        { role: "Theatre", name: "", phone: "" },
+      ];
+
+      snapshot.forEach((d) => {
+        const data = d.data() as Contact;
+        const i = defaultContacts.findIndex((c) => c.role === data.role);
+        if (i !== -1) defaultContacts[i] = { ...defaultContacts[i], ...data };
+      });
+
+      setContacts(defaultContacts);
+    };
+    fetchContacts();
+  }, [selectedShow]);
+
+  // ✏️ Handle input edits
+  const handleContactChange = (index: number, field: keyof Contact, value: string) => {
     const updated = [...contacts];
     updated[index][field] = value;
     setContacts(updated);
   };
 
-  // 🔧 Handle file upload to Firebase Storage
+  // 📄 Upload PDF
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
+    if (!e.target.files?.length) return;
     const file = e.target.files[0];
+    if (file.type !== "application/pdf") {
+      alert("Only PDF files allowed.");
+      return;
+    }
+
     setUploading(true);
-
     try {
-      // Upload to Storage
-      const storageRef = ref(storage, `contactDocs/${selectedShow}/${file.name}`);
+      const storagePath = `staff/${selectedShow}/contactDocs/${file.name}`;
+      const storageRef = ref(storage, storagePath);
       await uploadBytes(storageRef, file);
-
-      // Get public URL
       const url = await getDownloadURL(storageRef);
 
-      // Save metadata to Firestore
       const docRef = await addDoc(collection(db, "contactDocs"), {
         name: file.name,
         url,
@@ -75,50 +116,59 @@ export default function AdminContactsPage() {
 
       setDocuments((prev) => [
         ...prev,
-        { id: docRef.id, name: file.name, url, uploadedAt: new Date().toISOString(), showId: selectedShow },
+        {
+          id: docRef.id,
+          name: file.name,
+          url,
+          uploadedAt: new Date().toISOString(),
+          showId: selectedShow,
+        },
       ]);
+      setStatus("✅ File uploaded successfully!");
     } catch (err) {
-      console.error("❌ Error uploading file:", err);
-      alert("Error uploading file, check console");
+      console.error("❌ Upload error:", err);
+      alert("Error uploading file — check console");
     }
-
     setUploading(false);
   };
 
-  // 🔧 Delete a file from Firestore
-  const handleDeleteFile = async (id: string) => {
+  // 🗑️ Delete PDF safely
+  const handleDeleteFile = async (id: string, fileName: string) => {
     try {
+      const storagePath = `staff/${selectedShow}/contactDocs/${fileName}`;
+      const storageRef = ref(storage, storagePath);
+
+      await deleteObject(storageRef).catch((err: any) => {
+        if (err.code === "storage/object-not-found") {
+          console.warn("⚠️ File missing in Storage — skipping delete.");
+        } else throw err;
+      });
+
       await deleteDoc(doc(db, "contactDocs", id));
-      setDocuments((prev) => prev.filter((doc) => doc.id !== id));
+      setDocuments((prev) => prev.filter((d) => d.id !== id));
+      setStatus("🗑️ File deleted successfully!");
     } catch (err) {
-      console.error("❌ Error deleting file:", err);
+      console.error("❌ Delete error:", err);
+      setStatus("❌ Error deleting file.");
     }
   };
 
-  // 🔧 Save all contacts to Firestore
+  // 💾 Save contacts (non-destructive)
   const handleSave = async () => {
     try {
-      // First clear old contacts for this show
-      const q = query(collection(db, "contacts"), where("showId", "==", selectedShow));
-      const snapshot = await getDocs(q);
-      snapshot.forEach(async (d) => {
-        await deleteDoc(doc(db, "contacts", d.id));
-      });
-
-      // Add new contacts
       for (const c of contacts) {
-        if (c.name.trim() && c.phone.trim()) {
-          await addDoc(collection(db, "contacts"), {
-            ...c,
-            showId: selectedShow,
-          });
-        }
+        const contactRef = doc(db, "contacts", `${selectedShow}_${c.role.replace(/\s+/g, "_")}`);
+        await setDoc(contactRef, {
+          role: c.role,
+          name: c.name,
+          phone: c.phone,
+          showId: selectedShow,
+        });
       }
-
-      alert("✅ Contacts saved!");
+      alert("✅ Contacts saved successfully!");
     } catch (err) {
       console.error("❌ Error saving contacts:", err);
-      alert("Error saving contacts, check console");
+      alert("Error saving contacts — check console");
     }
   };
 
@@ -127,16 +177,13 @@ export default function AdminContactsPage() {
       className="relative min-h-screen flex flex-col justify-start items-center px-6 py-10 bg-center bg-no-repeat bg-cover"
       style={{ backgroundImage: "url('/bg-login.png')" }}
     >
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/40" />
-
-      {/* Container */}
       <div className="relative z-10 w-full max-w-md mx-auto text-white">
         <h1 className="text-2xl font-bold text-center mb-8 drop-shadow-lg">
           Admin – Contacts
         </h1>
 
-        {/* Show Selection */}
+        {/* Show Select */}
         <label className="block mb-2 font-medium">Select Show</label>
         <select
           value={selectedShow}
@@ -150,7 +197,7 @@ export default function AdminContactsPage() {
           <option value="sb">Sleeping Beauty</option>
         </select>
 
-        {/* Key Contacts */}
+        {/* Contacts */}
         <h2 className="text-lg font-semibold mb-4">Key Contacts</h2>
         <div className="space-y-3 mb-6">
           {contacts.map((contact, index) => (
@@ -164,26 +211,22 @@ export default function AdminContactsPage() {
                   type="text"
                   placeholder="Name"
                   value={contact.name}
-                  onChange={(e) =>
-                    handleContactChange(index, "name", e.target.value)
-                  }
-                  className="flex-1 min-w-0 rounded px-2 py-1 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  onChange={(e) => handleContactChange(index, "name", e.target.value)}
+                  className="flex-1 rounded px-2 py-1 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
                 />
                 <input
                   type="text"
                   placeholder="Phone"
                   value={contact.phone}
-                  onChange={(e) =>
-                    handleContactChange(index, "phone", e.target.value)
-                  }
-                  className="w-32 rounded px-2 py-1 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-600"
+                  onChange={(e) => handleContactChange(index, "phone", e.target.value)}
+                  className="w-32 rounded px-2 py-1 bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
                 />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Contact Sheets Upload */}
+        {/* Contact Sheet Uploads */}
         <h2 className="text-lg font-semibold mb-2">Contact Sheets (PDF)</h2>
         <input
           type="file"
@@ -192,8 +235,8 @@ export default function AdminContactsPage() {
           disabled={uploading}
           className="mb-4 text-white"
         />
+        {status && <p className="text-sm mb-3">{status}</p>}
 
-        {/* List of Uploaded Files */}
         <div className="space-y-2 mb-6">
           {documents.length === 0 && (
             <p className="text-sm opacity-70">No contact sheets uploaded yet.</p>
@@ -212,7 +255,7 @@ export default function AdminContactsPage() {
                 {doc.name}
               </a>
               <button
-                onClick={() => handleDeleteFile(doc.id)}
+                onClick={() => handleDeleteFile(doc.id, doc.name)}
                 className="text-red-400 hover:text-red-600 text-sm font-semibold"
               >
                 Delete
@@ -221,7 +264,7 @@ export default function AdminContactsPage() {
           ))}
         </div>
 
-        {/* Save Button */}
+        {/* Save */}
         <button
           onClick={handleSave}
           className="w-full py-3 rounded-lg bg-red-700 hover:bg-red-600 transition font-semibold shadow-lg"

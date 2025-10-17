@@ -5,6 +5,8 @@ import { db } from "@/lib/firebaseConfig";
 import {
   collection,
   addDoc,
+  deleteDoc,
+  doc,
   query,
   where,
   orderBy,
@@ -15,16 +17,14 @@ import {
 type Announcement = {
   id: string;
   message: string;
-  createdAt?: any;         // Firestore server timestamp
-  createdAtClient?: any;   // Local fallback timestamp
+  createdAt?: any; // Firestore server timestamp
+  createdAtClient?: any; // Local fallback timestamp
   showId: string;
 };
 
 // 🔧 Improved link rendering
 function renderMessage(msg: string) {
-  // Matches http(s):// links OR www. links
   const urlRegex = /((https?:\/\/[^\s]+)|(www\.[^\s]+))/g;
-
   return msg.split(urlRegex).map((part, i) => {
     if (!part) return null;
     if (urlRegex.test(part)) {
@@ -57,14 +57,13 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     let q;
     try {
-      // Preferred query (requires index)
       q = query(
         collection(db, "announcements"),
         where("showId", "==", showId),
         orderBy("createdAtClient", "desc")
       );
     } catch (err) {
-      console.warn("⚠️ Falling back to unsorted query (index not ready):", err);
+      console.warn("⚠️ Falling back to unsorted query:", err);
       q = query(collection(db, "announcements"), where("showId", "==", showId));
     }
 
@@ -88,21 +87,33 @@ export default function AnnouncementsPage() {
     }
   };
 
-  // 🔥 Post announcement (with dual timestamps)
+  // 🔥 Post announcement
   const handlePost = async () => {
     if (!newMsg.trim()) return;
     try {
-      const docRef = await addDoc(collection(db, "announcements"), {
+      await addDoc(collection(db, "announcements"), {
         message: newMsg,
         createdAt: serverTimestamp(),
-        createdAtClient: new Date().toISOString(), // fallback
+        createdAtClient: new Date().toISOString(),
         showId,
       });
-      console.log("✅ Announcement posted with ID:", docRef.id);
       setNewMsg("");
     } catch (err) {
       console.error("❌ Error posting announcement:", err);
       alert("Error posting announcement, check console.");
+    }
+  };
+
+  // 🗑️ Delete announcement
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this announcement?")) return;
+
+    try {
+      await deleteDoc(doc(db, "announcements", id));
+      setAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    } catch (err) {
+      console.error("❌ Error deleting announcement:", err);
+      alert("Error deleting announcement, check console.");
     }
   };
 
@@ -149,21 +160,33 @@ export default function AnnouncementsPage() {
         )}
       </div>
 
-      {/* Feed – newest first */}
+      {/* Feed */}
       <div className="space-y-4 max-w-md mx-auto">
         {announcements.map((a) => (
           <div
             key={a.id}
-            className="bg-black/40 p-4 rounded-lg border border-gray-700"
+            className="bg-black/40 p-4 rounded-lg border border-gray-700 flex justify-between items-start"
           >
-            <p className="text-sm">{renderMessage(a.message)}</p>
-            <p className="text-xs text-gray-400 mt-2">
-              {a.createdAt?.toDate
-                ? a.createdAt.toDate().toLocaleString()
-                : a.createdAtClient
-                ? new Date(a.createdAtClient).toLocaleString()
-                : "Just now"}
-            </p>
+            <div>
+              <p className="text-sm break-words">{renderMessage(a.message)}</p>
+              <p className="text-xs text-gray-400 mt-2">
+                {a.createdAt?.toDate
+                  ? a.createdAt.toDate().toLocaleString()
+                  : a.createdAtClient
+                  ? new Date(a.createdAtClient).toLocaleString()
+                  : "Just now"}
+              </p>
+            </div>
+
+            {/* Delete Button (visible only when unlocked) */}
+            {canPost && (
+              <button
+                onClick={() => handleDelete(a.id)}
+                className="ml-3 text-red-500 hover:text-red-300 text-xs font-semibold"
+              >
+                Delete
+              </button>
+            )}
           </div>
         ))}
       </div>
