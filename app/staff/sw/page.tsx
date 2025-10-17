@@ -13,12 +13,12 @@ export default function SnowWhiteStaffPage() {
   const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
 
   useEffect(() => {
-    // ✅ Optional auth check (can re-enable later)
+    // ✅ Optional auth check
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       console.log("Staff SW Auth check:", user ? "Logged in" : "Not logged in");
     });
 
-    // 🔥 Listen to the latest announcement for Snow White
+    // 🔥 Listen to the latest Snow White announcement
     const q = query(
       collection(db, "announcements"),
       where("showId", "==", "sw"),
@@ -33,7 +33,7 @@ export default function SnowWhiteStaffPage() {
         const lastViewed = localStorage.getItem("lastViewedAnnouncements_sw");
         const lastViewedTime = lastViewed ? new Date(lastViewed).getTime() : 0;
 
-        // Show “NEW” if latest announcement is newer than last viewed
+        // Compare latest post to last viewed timestamp
         if (latestTime > lastViewedTime) {
           setHasNewAnnouncement(true);
         } else {

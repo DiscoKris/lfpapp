@@ -22,6 +22,7 @@ type Announcement = {
   showId: string;
 };
 
+// 🔗 Turns URLs in messages into clickable links
 function renderMessage(msg: string) {
   const urlRegex = /((https?:\/\/[^\s]+)|(www\.[^\s]+))/g;
   return msg.split(urlRegex).map((part, i) => {
@@ -45,14 +46,14 @@ function renderMessage(msg: string) {
 }
 
 export default function AnnouncementsPage() {
-  const showId = "sw";
+  const showId = "sw"; // 👈 Snow White show ID
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [code, setCode] = useState("");
   const [canPost, setCanPost] = useState(false);
   const [newMsg, setNewMsg] = useState("");
 
-  // Fetch announcements
+  // 🔥 Fetch announcements live + mark as viewed
   useEffect(() => {
     let q;
     try {
@@ -71,11 +72,15 @@ export default function AnnouncementsPage() {
         ...(docSnap.data() as Omit<Announcement, "id">),
       }));
       setAnnouncements(docs as Announcement[]);
+
+      // ✅ Update localStorage so “NEW” badge disappears immediately
+      localStorage.setItem(`lastViewedAnnouncements_${showId}`, new Date().toISOString());
     });
 
     return () => unsub();
   }, [showId]);
 
+  // 🔓 Unlock posting
   const handleCodeSubmit = () => {
     if (code === "5678") {
       setCanPost(true);
@@ -85,6 +90,7 @@ export default function AnnouncementsPage() {
     }
   };
 
+  // 📝 Post new announcement
   const handlePost = async () => {
     if (!newMsg.trim()) return;
     try {
@@ -101,6 +107,7 @@ export default function AnnouncementsPage() {
     }
   };
 
+  // 🗑️ Delete announcement
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this announcement?")) return;
     try {
@@ -118,7 +125,7 @@ export default function AnnouncementsPage() {
         Announcements – A Snow White Christmas
       </h1>
 
-      {/* Unlock + Post */}
+      {/* Unlock + Post Section */}
       <div className="max-w-md mx-auto bg-black/40 p-3 rounded-lg border border-gray-700 mb-6">
         {!canPost ? (
           <div className="flex items-center gap-2">
@@ -171,7 +178,6 @@ export default function AnnouncementsPage() {
                 : "Just now"}
             </p>
 
-            {/* 🗑️ Delete button clearly visible */}
             {canPost && (
               <button
                 onClick={() => handleDelete(a.id)}
