@@ -32,7 +32,7 @@ export default function AdminCodesPage() {
         data[docSnap.id] = docSnap.data().value;
       });
       setCodes({
-        staffUnlock: data.staffUnlock || "2525",
+        staffUnlock: data.staffUnlock || "2025",
         announcementsUnlock: data.announcementsUnlock || "5678",
         reportsUnlock: data.reportsUnlock || "5678",
       });
