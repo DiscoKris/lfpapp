@@ -6,32 +6,44 @@ import { onAuthStateChanged } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import Tile from "../../../components/Tile";
 import Image from "next/image";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
 export default function OzStaffPage() {
   const router = useRouter();
-  const [announcementCount, setAnnouncementCount] = useState(0);
+  const [hasNewAnnouncement, setHasNewAnnouncement] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // 🚨 Auth check temporarily disabled for testing
-      // if (!user) {
-      //   router.push("/"); // redirect to login if not logged in
-      // }
+    // ✅ Optional auth check (you can re-enable later if needed)
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       console.log("Staff OZ Auth check:", user ? "Logged in" : "Not logged in");
     });
 
-    // 🔥 Listen for OZ announcements count
+    // 🔥 Listen to the *latest* announcement for this show
     const q = query(
       collection(db, "announcements"),
-      where("showId", "==", "oz")
+      where("showId", "==", "oz"),
+      orderBy("createdAtClient", "desc")
     );
+
     const unsubAnnouncements = onSnapshot(q, (snapshot) => {
-      setAnnouncementCount(snapshot.size);
+      if (!snapshot.empty) {
+        const latest = snapshot.docs[0].data() as any;
+        const latestTime = new Date(latest.createdAtClient).getTime();
+
+        const lastViewed = localStorage.getItem("lastViewedAnnouncements_oz");
+        const lastViewedTime = lastViewed ? new Date(lastViewed).getTime() : 0;
+
+        // If the latest announcement is newer than the last viewed, show “NEW”
+        if (latestTime > lastViewedTime) {
+          setHasNewAnnouncement(true);
+        } else {
+          setHasNewAnnouncement(false);
+        }
+      }
     });
 
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
       unsubAnnouncements();
     };
   }, [router]);
@@ -60,7 +72,7 @@ export default function OzStaffPage() {
           title="Announcements"
           emoji="📢"
           href="/staff/oz/announcements"
-          badgeCount={announcementCount}
+          showNew={hasNewAnnouncement}
         />
         <Tile title="Documents" emoji="📄" href="/staff/oz/documents" />
         <Tile title="Contacts" emoji="📇" href="/staff/oz/contacts" />
