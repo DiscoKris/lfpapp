@@ -164,7 +164,7 @@ export default function AdminProgramsPage() {
           <select
             value={selectedShow}
             onChange={(e) => setSelectedShow(e.target.value)}
-            className="w-full p-2 rounded text-black"
+            className="w-full p-2 rounded text-white"
           >
             <option value="">-- Choose a show --</option>
             {shows.map((show) => (
