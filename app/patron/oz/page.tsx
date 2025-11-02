@@ -37,9 +37,9 @@ export default function OzPage() {
 
       {/* Tiles Grid */}
       <div className="grid grid-cols-2 gap-6 max-w-md w-full">
-        <Tile title="Program" emoji="🎭" href="/patron/program" />
-        <Tile title="Camera" emoji="📸" href="/patron/camera" />
-        <Tile title="Games" emoji="🎮" href="/patron/games" />
+        <Tile title="Program" emoji="🎭" href="/patron/oz/program" />
+        <Tile title="Camera" emoji="📸" href="/patron/oz/camera" />
+        <Tile title="Games" emoji="🎮" href="/patron/oz/games" />
         <Tile title="Store" emoji="🛍️" href="/patron/store" />
         <Tile title="Social" emoji="💬" href="/patron/social" />
         <Tile title="Shows" emoji="🎟️" href="/patron/upcoming" />
