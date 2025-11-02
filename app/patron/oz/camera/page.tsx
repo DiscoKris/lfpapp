@@ -4,14 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { db } from "../../../../lib/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
-const SHOW_ID = "OZ25";                 // ← change to OZ25 on the Oz page
-const DASHBOARD_PATH = "/patron/oz/dashboard"; // ← change to /patron/oz/dashboard on the Oz page
+const SHOW_ID = "OZ25";
+const DASHBOARD_PATH = "/patron/oz/dashboard";
 
 export default function CameraPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Start with your local defaults; we’ll prepend Firestore filter if present
+  // Local defaults; uploaded filter (if any) will be prepended
   const [filters, setFilters] = useState<string[]>([
     "/filters/oz_filter1.png",
     "/filters/oz_filter2.png",
@@ -33,7 +33,7 @@ export default function CameraPage() {
         const d = snap.data() as any;
         const uploaded = (d?.filterUrl ?? d?.cameraFilterUrl ?? "") as string;
         if (uploaded) {
-          setFilters((prev) => [uploaded, ...prev]); // put uploaded filter first
+          setFilters((prev) => [uploaded, ...prev]);
           setActiveFilter(0);
         }
       } catch (e) {
@@ -43,7 +43,7 @@ export default function CameraPage() {
     })();
   }, []);
 
-  // iOS needs a user gesture — so we show a Start button, but we also try to start for browsers that allow autoplay
+  // Try to start camera automatically (some browsers allow it)
   useEffect(() => {
     startCamera(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,14 +77,15 @@ export default function CameraPage() {
     const diff = endX - touchStartX.current;
     const THRESH = 40;
     if (Math.abs(diff) >= THRESH) {
-      if (diff < 0) nextFilter(); else prevFilter();
+      if (diff < 0) nextFilter();
+      else prevFilter();
     }
     touchStartX.current = null;
   }
   const nextFilter = () => setActiveFilter((i) => (i + 1) % filters.length);
   const prevFilter = () => setActiveFilter((i) => (i - 1 + filters.length) % filters.length);
 
-  // Capture with overlay
+  // Capture with overlay (wait for overlay load → Safari-safe)
   async function handleCapture() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -98,17 +99,34 @@ export default function CameraPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw camera frame
+    // 1) Draw camera frame
     ctx.drawImage(video, 0, 0, w, h);
 
-    // Draw overlay
+    // 2) Ensure overlay is loaded before drawing
     const overlay = new Image();
     overlay.crossOrigin = "anonymous";
     overlay.src = filters[activeFilter];
-    try { await overlay.decode(); } catch {}
-    ctx.drawImage(overlay, 0, 0, w, h);
+    await new Promise<void>((resolve) => {
+      if (overlay.complete) return resolve();
+      overlay.onload = () => resolve();
+      overlay.onerror = () => resolve(); // fail-open
+    });
 
-    setCaptured(canvas.toDataURL("image/png"));
+    // 3) Draw overlay stretched to cover
+    try {
+      ctx.drawImage(overlay, 0, 0, w, h);
+    } catch {
+      // ignore draw failure; still export camera frame
+    }
+
+    // 4) Export to PNG data URL
+    try {
+      const dataUrl = canvas.toDataURL("image/png");
+      setCaptured(dataUrl);
+    } catch (e) {
+      console.error("Export failed:", e);
+      setCaptured(canvas.toDataURL("image/png"));
+    }
   }
 
   // Share / Download
@@ -117,9 +135,10 @@ export default function CameraPage() {
     const blob = await (await fetch(captured)).blob();
     const file = new File([blob], "lfp-selfie.png", { type: "image/png" });
 
-    if ((navigator as any).canShare && (navigator as any).canShare({ files: [file] })) {
+    const n = navigator as any;
+    if (n.canShare && n.canShare({ files: [file] })) {
       try {
-        await (navigator as any).share({
+        await n.share({
           files: [file],
           title: "Lythgoe Selfie",
           text: "Snapped at the show!",
@@ -139,7 +158,7 @@ export default function CameraPage() {
     URL.revokeObjectURL(url);
   }
 
-  // Cleanup camera on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       const stream = videoRef.current?.srcObject as MediaStream | undefined;
@@ -150,7 +169,7 @@ export default function CameraPage() {
   return (
     <main className="min-h-screen bg-black text-white p-4">
       <div className="max-w-sm mx-auto">
-        {/* Back button */}
+        {/* Back */}
         <a
           href={DASHBOARD_PATH}
           className="inline-block mb-4 px-4 py-2 bg-white/15 hover:bg-white/25 rounded-xl text-sm"
@@ -160,7 +179,7 @@ export default function CameraPage() {
 
         <h1 className="text-xl font-semibold mb-3">Camera</h1>
 
-        {/* Live camera with overlay */}
+        {/* Live camera + overlay */}
         <div
           className="relative w-full rounded-xl overflow-hidden bg-black"
           style={{ aspectRatio: "9/16" }}
@@ -168,7 +187,7 @@ export default function CameraPage() {
           onTouchEnd={onTouchEnd}
         >
           <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
-          {/* Overlay PNG */}
+          {/* Overlay PNG (FILL the frame) */}
           <img
             src={filters[activeFilter]}
             alt="Filter overlay"
@@ -229,10 +248,14 @@ export default function CameraPage() {
                 Retake
               </button>
             </div>
+            {/* Helpful hint for saving to camera roll */}
+            <p className="mt-3 text-xs opacity-80">
+              Tip: On iPhone/Android, use Share → “Save Image” to add it to your camera roll.
+            </p>
           </div>
         )}
 
-        {/* Hidden canvas for compositing */}
+        {/* Hidden canvas */}
         <canvas ref={canvasRef} className="hidden" />
       </div>
     </main>
