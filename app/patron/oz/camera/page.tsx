@@ -172,7 +172,7 @@ export default function CameraPage() {
           <img
             src={filters[activeFilter]}
             alt="Filter overlay"
-            className="absolute inset-0 w-full h-full object-contain pointer-events-none"
+            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           />
 
           {/* Left/Right nubs */}
