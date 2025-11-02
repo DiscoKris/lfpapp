@@ -1,170 +1,124 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { db, storage } from "../../../../lib/firebaseConfig";
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  listAll,
-  deleteObject,
-} from "firebase/storage";
-import Image from "next/image";
+import { useEffect, useState } from "react";
+import { db } from "../../../../lib/firebaseConfig";
+import { collection, getDocs } from "firebase/firestore";
 
 type Show = {
   id: string;
-  name: string;
-  city: string;
-  filters?: string[];
+  name?: string;
+  Name?: string;
+  city?: string;
+  City?: string;
 };
 
 export default function AdminFiltersPage() {
   const [shows, setShows] = useState<Show[]>([]);
-  const [selectedShow, setSelectedShow] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [filters, setFilters] = useState<string[]>([]);
+  const [loadingShows, setLoadingShows] = useState(true);
+  const [showsError, setShowsError] = useState("");
+  const [selectedShow, setSelectedShow] = useState("");
 
-  // Load shows
-  useEffect(() => {
-    const fetchShows = async () => {
-      const snapshot = await getDocs(collection(db, "shows"));
-      const data = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      })) as Show[];
-      setShows(data);
-    };
-    fetchShows();
-  }, []);
-
-  // Load filters when show selected
-  useEffect(() => {
-    const fetchFilters = async () => {
-      if (!selectedShow) return;
-      const folderRef = ref(storage, `filters/${selectedShow}`);
-      const result = await listAll(folderRef);
-      const urls = await Promise.all(
-        result.items.map((item) => getDownloadURL(item))
-      );
-      setFilters(urls);
-    };
-    fetchFilters();
-  }, [selectedShow]);
-
-  const handleUpload = async () => {
-    if (!file || !selectedShow) {
-      setMessage("Please select a show and a file.");
-      return;
-    }
-
+  // ---- Load shows ----
+  const loadShows = async () => {
+    setLoadingShows(true);
+    setShowsError("");
     try {
-      setUploading(true);
-      setMessage("");
-
-      // If already 5 filters, delete the first one
-      if (filters.length >= 5) {
-        const firstRef = ref(storage, `filters/${selectedShow}/filter0.png`);
-        await deleteObject(firstRef).catch(() => {});
-      }
-
-      // Create new filename
-      const newIndex = Date.now(); // timestamp to avoid clashes
-      const storageRef = ref(
-        storage,
-        `filters/${selectedShow}/filter-${newIndex}.png`
-      );
-
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-
-      // Update Firestore with new array
-      const newFilters = [...filters, url].slice(-5); // keep last 5
-      const showRef = doc(db, "shows", selectedShow);
-      await updateDoc(showRef, { filters: newFilters });
-
-      setMessage("Filter uploaded successfully!");
-      setFile(null);
-      setFilters(newFilters);
-    } catch (err) {
-      console.error(err);
-      setMessage("Error uploading filter.");
+      const snap = await getDocs(collection(db, "shows"));
+      const data = snap.docs.map((docSnap) => {
+        const d = docSnap.data() as any;
+        return {
+          id: docSnap.id,
+          name: d.name ?? d.Name ?? "",
+          city: d.city ?? d.City ?? "",
+        } as Show;
+      });
+      data.sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+      setShows(data);
+      if (snap.size === 0) setShowsError("No shows found in Firestore.");
+    } catch (err: any) {
+      console.error("Error loading shows:", err);
+      setShowsError(err.message || "Error loading shows (check rules/config).");
     } finally {
-      setUploading(false);
+      setLoadingShows(false);
     }
   };
 
+  useEffect(() => {
+    loadShows();
+  }, []);
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-black via-red-900 to-black text-white p-6">
-      <h1 className="text-2xl font-bold text-center mb-8">Upload Filters</h1>
-
-      {/* Select Show */}
-      <div className="mb-6">
-        <label className="block mb-2">Select Show</label>
-        <select
-          value={selectedShow}
-          onChange={(e) => setSelectedShow(e.target.value)}
-          className="w-full p-2 rounded text-black"
+      {/* ✅ Back button */}
+      <div className="max-w-md mx-auto mb-4">
+        <a
+          href="/admin/patron"
+          className="inline-block px-4 py-2 bg-white/15 hover:bg-white/25 rounded-xl text-sm"
         >
-          <option value="">-- Choose a show --</option>
-          {shows.map((show) => (
-            <option key={show.id} value={show.id}>
-              {show.name} ({show.city})
+          ← Back
+        </a>
+      </div>
+
+      <h1 className="text-2xl font-bold text-center mb-8">Camera Filters</h1>
+
+      <div className="max-w-md mx-auto">
+        {/* Diagnostics */}
+        <div className="mb-4 text-xs opacity-80">
+          <div>Shows loaded: {loadingShows ? "…" : shows.length}</div>
+          {showsError && (
+            <div className="text-yellow-300 mt-1">{showsError}</div>
+          )}
+        </div>
+
+        {/* Refresh button */}
+        <button
+          onClick={loadShows}
+          className="mb-6 px-3 py-2 bg-white/15 hover:bg-white/25 rounded text-sm"
+        >
+          Refresh List
+        </button>
+
+        {/* ✅ Select Show */}
+        <label className="block mb-2 text-sm font-semibold text-white/90">
+          Select Show
+        </label>
+        <div className="relative mb-6">
+          <select
+            value={selectedShow}
+            onChange={(e) => setSelectedShow(e.target.value)}
+            className="w-full p-3 rounded-lg bg-transparent text-white border border-white/40 
+                       focus:outline-none focus:ring-2 focus:ring-red-500 appearance-none"
+          >
+            <option value="" disabled>
+              -- Choose a show --
             </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Upload */}
-      <div className="mb-6">
-        <label className="block mb-2">Upload Filter (PNG)</label>
-        <input
-          type="file"
-          accept="image/png"
-          onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="w-full p-2 bg-white text-black rounded"
-        />
-      </div>
-
-      <button
-        onClick={handleUpload}
-        disabled={uploading}
-        className="w-full py-3 bg-red-700 hover:bg-red-600 rounded font-semibold disabled:opacity-50"
-      >
-        {uploading ? "Uploading..." : "Upload Filter"}
-      </button>
-
-      {message && <p className="mt-4 text-center">{message}</p>}
-
-      {/* Preview Filters */}
-      {filters.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-lg font-semibold mb-4">Current Filters</h2>
-          <div className="grid grid-cols-2 gap-4">
-            {filters.map((url, i) => (
-              <div
-                key={i}
-                className="bg-black/40 p-2 rounded-lg flex justify-center items-center"
+            {shows.map((s) => (
+              <option
+                key={s.id}
+                value={s.id}
+                className="bg-black text-white"
               >
-                <Image
-                  src={url}
-                  alt={`Filter ${i + 1}`}
-                  width={100}
-                  height={100}
-                  className="object-contain"
-                />
-              </div>
+                {(s.name || s.id)}{s.city ? ` (${s.city})` : ""}
+              </option>
             ))}
+          </select>
+
+          {/* visible caret */}
+          <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="text-white/80"
+            >
+              <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
+            </svg>
           </div>
         </div>
-      )}
+
+        {/* Future: upload or manage filters UI here */}
+      </div>
     </main>
   );
 }
