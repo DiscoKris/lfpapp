@@ -161,6 +161,12 @@ export default function OzSpotTheDifferencePage() {
       width: img.clientWidth,
       height: img.clientHeight,
     });
+    requestAnimationFrame(() => {
+      setRenderSize({
+        width: img.clientWidth,
+        height: img.clientHeight,
+      });
+    });
   }, []);
 
   return (
@@ -186,8 +192,8 @@ export default function OzSpotTheDifferencePage() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:justify-center">
-          <div className="w-full max-w-md">
+        <div className="flex flex-col items-center gap-6">
+          <div className="w-[90%] max-w-[420px] sm:w-[85%] md:w-[80%] lg:w-[70%] xl:w-[60%] mx-auto">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-lg">
               <div className="overflow-hidden rounded-2xl">
                 <Image
@@ -205,7 +211,7 @@ export default function OzSpotTheDifferencePage() {
             </p>
           </div>
 
-          <div className="w-full max-w-md">
+          <div className="mt-4 w-[90%] max-w-[420px] sm:w-[85%] md:w-[80%] lg:w-[70%] xl:w-[60%] mx-auto">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-lg">
               <div className="relative overflow-hidden rounded-2xl">
                 <Image
