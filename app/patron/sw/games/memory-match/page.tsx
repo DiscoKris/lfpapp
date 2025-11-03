@@ -145,19 +145,55 @@ export default function MemoryMatchPage() {
         <div className="grid grid-cols-4 gap-3">
           {deck.map((card) => {
             const faceUp = isFaceUp(card);
+            const isMatched = card.matched;
+            const isRevealed = faceUp;
+            const ariaLabel = isMatched
+              ? "Matched card"
+              : isRevealed
+              ? "Revealed card"
+              : "Facedown card";
+
             return (
               <button
                 key={card.id}
                 onClick={() => onCardClick(card)}
-                disabled={faceUp || locked}
-                className={`aspect-square rounded-2xl border border-white/10 p-0 text-2xl shadow-lg transition
-                  ${faceUp ? "bg-[#cc0000]" : "bg-[#b60000] hover:bg-[#c30000] active:scale-[0.99]"}`
-                }
-                aria-label={faceUp ? `Face ${card.key}` : "Facedown card"}
+                disabled={isMatched || locked}
+                type="button"
+                className={`group relative aspect-square rounded-2xl border border-white/15 bg-transparent p-0 text-2xl transition-all duration-300 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#260000]
+                  ${
+                    isMatched
+                      ? "pointer-events-none opacity-0 scale-95"
+                      : "hover:-translate-y-0.5 hover:border-white/30"
+                  }
+                  ${locked && !isRevealed ? "cursor-not-allowed" : ""}
+                `}
+                aria-label={ariaLabel}
+                aria-pressed={isRevealed}
               >
-                <div className="flex h-full w-full items-center justify-center">
-                  {/* If you switch to images, replace this with <img src={card.face} .../> */}
-                  <span className="select-none">{card.face}</span>
+                <div
+                  className={`relative h-full w-full transform-gpu transition-transform duration-300 [transform-style:preserve-3d] ${
+                    isRevealed ? "[transform:rotateY(180deg)]" : ""
+                  }`}
+                >
+                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-[#7c0000] via-[#9b0000] to-[#5a0000] text-3xl text-white/80 [backface-visibility:hidden]">
+                    <span aria-hidden className="select-none text-3xl">
+                      🎭
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-[#ff6b6b]/90 via-[#ff4d4d]/90 to-[#ff2d2d]/90 text-4xl text-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                    {card.face.startsWith("/") ? (
+                      <img
+                        src={card.face}
+                        alt=""
+                        className="h-10 w-10 select-none"
+                        draggable={false}
+                      />
+                    ) : (
+                      <span aria-hidden className="select-none text-3xl">
+                        {card.face}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             );
