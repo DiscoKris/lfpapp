@@ -193,7 +193,7 @@ export default function OzSpotTheDifferencePage() {
         </div>
 
         <div className="flex flex-col items-center gap-6">
-          <div className="w-[90%] max-w-[420px] sm:w-[85%] md:w-[80%] lg:w-[70%] xl:w-[60%] mx-auto">
+          <div className="mx-auto w-[92%] max-w-[540px] sm:w-[88%] md:w-[82%] lg:w-[75%] xl:w-[65%]">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-lg">
               <div className="overflow-hidden rounded-2xl">
                 <Image
@@ -211,7 +211,7 @@ export default function OzSpotTheDifferencePage() {
             </p>
           </div>
 
-          <div className="mt-4 w-[90%] max-w-[420px] sm:w-[85%] md:w-[80%] lg:w-[70%] xl:w-[60%] mx-auto">
+          <div className="mx-auto mt-4 w-[92%] max-w-[540px] sm:w-[88%] md:w-[82%] lg:w-[75%] xl:w-[65%]">
             <div className="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-lg">
               <div className="relative overflow-hidden rounded-2xl">
                 <Image
