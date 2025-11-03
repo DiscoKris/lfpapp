@@ -144,55 +144,62 @@ export default function MemoryMatchPage() {
 
         <div className="grid grid-cols-4 gap-3">
           {deck.map((card) => {
-            const faceUp = isFaceUp(card);
             const isMatched = card.matched;
-            const isRevealed = faceUp;
+            const flipped = flippedIds.includes(card.id);
+            const faceUp = flipped || isMatched;
             const ariaLabel = isMatched
               ? "Matched card"
-              : isRevealed
+              : faceUp
               ? "Revealed card"
               : "Facedown card";
+            const stateAttr = isMatched
+              ? "matched"
+              : faceUp
+              ? "flipped"
+              : "facedown";
 
             return (
               <button
                 key={card.id}
                 onClick={() => onCardClick(card)}
-                disabled={isMatched || locked}
+                disabled={isMatched}
                 type="button"
-                className={`group relative aspect-square rounded-2xl border border-white/15 bg-transparent p-0 text-2xl transition-all duration-300 [perspective:1000px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#260000]
-                  ${
-                    isMatched
-                      ? "pointer-events-none opacity-0 scale-95"
-                      : "hover:-translate-y-0.5 hover:border-white/30"
-                  }
-                  ${locked && !isRevealed ? "cursor-not-allowed" : ""}
-                `}
+                data-state={stateAttr}
+                className={`group relative aspect-square rounded-2xl border border-white/10 shadow-lg transition-all duration-200 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#260000] ${
+                  isMatched
+                    ? "pointer-events-none opacity-40"
+                    : "hover:-translate-y-0.5 hover:border-white/30"
+                } ${locked && !faceUp ? "cursor-not-allowed" : ""}`}
                 aria-label={ariaLabel}
-                aria-pressed={isRevealed}
+                aria-pressed={faceUp}
               >
                 <div
-                  className={`relative h-full w-full transform-gpu transition-transform duration-300 [transform-style:preserve-3d] ${
-                    isRevealed ? "[transform:rotateY(180deg)]" : ""
-                  }`}
+                  className="relative h-full w-full [perspective:1000px]"
                 >
-                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-[#7c0000] via-[#9b0000] to-[#5a0000] text-3xl text-white/80 [backface-visibility:hidden]">
-                    <span aria-hidden className="select-none text-3xl">
-                      🎭
-                    </span>
-                  </div>
-                  <div className="absolute inset-0 flex items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-[#ff6b6b]/90 via-[#ff4d4d]/90 to-[#ff2d2d]/90 text-4xl text-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                    {card.face.startsWith("/") ? (
-                      <img
-                        src={card.face}
-                        alt=""
-                        className="h-10 w-10 select-none"
-                        draggable={false}
-                      />
-                    ) : (
+                  <div
+                    className={`relative h-full w-full transition-transform duration-300 [transform-style:preserve-3d] ${
+                      faceUp ? "[transform:rotateY(180deg)]" : ""
+                    }`}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[#b60000] text-3xl text-white/70 [backface-visibility:hidden] group-hover:bg-[#c30000]">
                       <span aria-hidden className="select-none text-3xl">
-                        {card.face}
+                        🎭
                       </span>
-                    )}
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-[#cc0000] text-4xl text-white [backface-visibility:hidden] [transform:rotateY(180deg)]">
+                      {card.face.startsWith("/") ? (
+                        <img
+                          src={card.face}
+                          alt=""
+                          className="h-10 w-10 select-none"
+                          draggable={false}
+                        />
+                      ) : (
+                        <span aria-hidden className="select-none text-3xl">
+                          {card.face}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </button>
