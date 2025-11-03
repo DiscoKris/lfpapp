@@ -1,4 +1,4 @@
-// aa/patron/sw/games/quiz/page.jsx
+// app/patron/sw/games/quiz/page.jsx
 "use client";
 
 import Link from "next/link";
