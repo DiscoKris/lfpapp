@@ -191,8 +191,8 @@ export default function OzSpotTheDifferencePage() {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-lg">
               <div className="overflow-hidden rounded-2xl">
                 <Image
-                  src="/shows/oz/spot-difference/oz_original.jpg"
-                  alt="Original Oz scene"
+                  src="/shows/oz/spot-the-difference/oz_original.png"
+                  alt="Original Oz Scene"
                   width={960}
                   height={720}
                   className="h-auto w-full"
@@ -209,7 +209,7 @@ export default function OzSpotTheDifferencePage() {
             <div className="rounded-3xl border border-white/10 bg-white/5 p-3 shadow-lg">
               <div className="relative overflow-hidden rounded-2xl">
                 <Image
-                  src="/shows/oz/spot-difference/oz_differences.jpg"
+                  src="/shows/oz/spot-the-difference/oz_differences.png"
                   alt="Spot the differences Oz scene"
                   width={960}
                   height={720}
