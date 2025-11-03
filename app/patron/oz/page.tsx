@@ -42,7 +42,7 @@ export default function OzPage() {
         <Tile title="Games" emoji="🎮" href="/patron/oz/games" />
         <Tile title="Store" emoji="🛍️" href="/patron/store" />
         <Tile title="Social" emoji="💬" href="/patron/social" />
-        <Tile title="Shows" emoji="🎟️" href="/patron/upcoming" />
+        <Tile title="Shows" emoji="🎟️" href="/patron/shows" />
       </div>
     </main>
   );
