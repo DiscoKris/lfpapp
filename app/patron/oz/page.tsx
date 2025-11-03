@@ -40,9 +40,9 @@ export default function OzPage() {
         <Tile title="Program" emoji="🎭" href="/patron/oz/program" />
         <Tile title="Camera" emoji="📸" href="/patron/oz/camera" />
         <Tile title="Games" emoji="🎮" href="/patron/oz/games" />
-        <Tile title="Store" emoji="🛍️" href="/patron/store" />
-        <Tile title="Social" emoji="💬" href="/patron/social" />
-        <Tile title="Shows" emoji="🎟️" href="/patron/shows" />
+        <Tile title="Store" emoji="🛍️" href="/patron/oz/store" />
+        <Tile title="Social" emoji="💬" href="/patron/oz/social" />
+        <Tile title="Shows" emoji="🎟️" href="/patron/oz/shows" />
       </div>
     </main>
   );

@@ -40,9 +40,9 @@ export default function SnowWhitePage() {
         <Tile title="Program" emoji="🎭" href="/patron/sw/program" />
         <Tile title="Camera" emoji="📸" href="/patron/sw/camera" />
         <Tile title="Games" emoji="🎮" href="/patron/sw/games" />
-        <Tile title="Store" emoji="🛍️" href="/patron/store" />
-        <Tile title="Social" emoji="💬" href="/patron/social" />
-        <Tile title="Shows" emoji="🎟️" href="/patron/shows" />
+        <Tile title="Store" emoji="🛍️" href="/patron/sw/store" />
+        <Tile title="Social" emoji="💬" href="/patron/sw/social" />
+        <Tile title="Shows" emoji="🎟️" href="/patron/sw/shows" />
       </div>
     </main>
   );
