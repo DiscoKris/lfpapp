@@ -91,7 +91,7 @@ export default function GamesDashboard({
       <div className="w-full max-w-5xl">
         <header className="text-center sm:text-left">
           <p className="text-sm uppercase tracking-[0.3em] text-white/70">
-            Patron Lounge
+            The Games Lounge
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             Games
