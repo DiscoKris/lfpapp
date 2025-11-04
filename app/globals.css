@@ -3,11 +3,29 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --lfp-primary: #0d5c63;
+  --lfp-accent: #e0b100;
+  --lfp-success: #1e7a46;
+  --lfp-warning: #b68600;
+  --lfp-surface: #ffffff;
+  --lfp-muted: #e7e7ea;
+  --lfp-border: #d7d7db;
+  --lfp-text: #111114;
+  --lfp-text-weak: #5e5e66;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-lfp-primary: var(--lfp-primary);
+  --color-lfp-accent: var(--lfp-accent);
+  --color-lfp-success: var(--lfp-success);
+  --color-lfp-warning: var(--lfp-warning);
+  --color-lfp-surface: var(--lfp-surface);
+  --color-lfp-muted: var(--lfp-muted);
+  --color-lfp-border: var(--lfp-border);
+  --color-lfp-text: var(--lfp-text);
+  --color-lfp-text-weak: var(--lfp-text-weak);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

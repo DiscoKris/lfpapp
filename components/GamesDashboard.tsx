@@ -61,9 +61,9 @@ export default function GamesDashboard({
       emojiLabel: "Word search puzzle",
     },
     {
-      title: "Spot the Difference",
-      description: "Compare scenes and spot every change.",
-      path: `${normalizedBasePath}/spot-the-difference${query}`,
+      title: "Wordle World",
+      description: "Guess the word related to the show.",
+      path: `${normalizedBasePath}/wordle${query}`,
       Icon: typeof Search === "function" ? Search : undefined,
       fallbackEmoji: "🔍",
       emojiLabel: "Magnifying glass",
