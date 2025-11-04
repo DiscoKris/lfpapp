@@ -5,7 +5,7 @@ import { db } from "../../../../lib/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
 const SHOW_ID = "OZ25";
-const DASHBOARD_PATH = "/patron/oz/dashboard";
+const DASHBOARD_PATH = "/patron/oz";
 
 export default function CameraPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);

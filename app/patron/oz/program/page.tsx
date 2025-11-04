@@ -5,7 +5,7 @@ import { db } from "../../../../lib/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
 const SHOW_ID = "OZ25"; // Firestore document id for The Winter of Oz
-const DASHBOARD_PATH = "/patron/oz/dashboard";
+const DASHBOARD_PATH = "/patron/oz";
 
 export default function ProgramPage() {
   const [status, setStatus] = useState<"loading" | "ready" | "no-program" | "error">("loading");

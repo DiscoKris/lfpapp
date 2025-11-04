@@ -5,7 +5,7 @@ import { db } from "../../../../lib/firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
 const SHOW_ID = "sw25"; // Firestore document id for Snow White
-const DASHBOARD_PATH = "/patron/sw/dashboard";
+const DASHBOARD_PATH = "/patron/sw";
 
 export default function ProgramPage() {
   const [status, setStatus] = useState<"loading" | "ready" | "no-program" | "error">("loading");
