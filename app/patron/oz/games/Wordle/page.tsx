@@ -310,7 +310,8 @@ export default function WordOfOzPage() {
   const rowStatuses = useMemo(() => {
     return Array.from({ length: MAX_GUESSES }, (_, index) => {
       if (index < statuses.length) return statuses[index];
-      return Array(solutionLength).fill(null);
+      // keep array length consistent for mapping
+      return Array(solutionLength).fill(null) as unknown as TileStatus[];
     });
   }, [statuses, solutionLength]);
 
@@ -340,6 +341,7 @@ export default function WordOfOzPage() {
             <p className="text-sm text-lfp-text-weak">Fetching today’s word list…</p>
           )}
 
+          {/* Board */}
           <div
             className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-6 shadow-sm"
             role="application"
@@ -390,6 +392,7 @@ export default function WordOfOzPage() {
             </div>
           </div>
 
+          {/* Feedback bubble */}
           {feedback && (
             <div
               className="rounded-full border border-lfp-warning bg-lfp-surface px-4 py-2 text-sm text-lfp-text"
@@ -399,6 +402,7 @@ export default function WordOfOzPage() {
             </div>
           )}
 
+          {/* Result banner */}
           {isComplete && bannerMessage && (
             <div
               className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 text-center text-sm text-lfp-text"
@@ -409,59 +413,121 @@ export default function WordOfOzPage() {
             </div>
           )}
 
+          {/* Keyboard — switched to responsive grid to prevent overflow */}
           <div className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 shadow-sm">
-            <div className="grid gap-2">
-              {keyboardRows.map((row) => (
-                <div key={row} className="flex justify-center gap-2">
-                  {row.split("").map((letter) => {
-                    const status = letterState.get(letter.toLowerCase());
-                    let keyClasses =
-                      "flex-1 select-none rounded-2xl border border-lfp-border bg-lfp-surface px-3 py-3 text-center text-sm font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
-                    if (status === "correct") {
-                      keyClasses =
-                        "flex-1 select-none rounded-2xl border border-lfp-success bg-lfp-success px-3 py-3 text-center text-sm font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
-                    } else if (status === "present") {
-                      keyClasses =
-                        "flex-1 select-none rounded-2xl border border-lfp-warning bg-lfp-warning px-3 py-3 text-center text-sm font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
-                    } else if (status === "absent") {
-                      keyClasses =
-                        "flex-1 select-none rounded-2xl border border-lfp-muted bg-lfp-muted px-3 py-3 text-center text-sm font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
-                    }
-                    return (
-                      <button
-                        key={letter}
-                        type="button"
-                        className={keyClasses}
-                        onClick={() => handleKeyInput(letter)}
-                        aria-label={`Letter ${letter}`}
-                        disabled={isComplete}
-                      >
-                        {letter}
-                      </button>
-                    );
-                  })}
-                  {row === "ZXCVBNM" && (
-                    <>
-                      <button
-                        type="button"
-                        className="flex-[1.5] select-none rounded-2xl border border-lfp-border bg-lfp-primary px-3 py-3 text-center text-sm font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
-                        onClick={() => handleKeyInput("ENTER")}
-                        disabled={isComplete}
-                      >
-                        Enter
-                      </button>
-                      <button
-                        type="button"
-                        className="flex-[1.5] select-none rounded-2xl border border-lfp-border bg-lfp-surface px-3 py-3 text-center text-sm font-semibold text-lfp-text transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
-                        onClick={() => handleKeyInput("BACKSPACE")}
-                        disabled={isComplete}
-                      >
-                        Delete
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
+            <div className="mx-auto w-full max-w-[720px]">
+              {/* Row 1: 10 keys */}
+              <div className="grid grid-cols-10 gap-1 sm:gap-2 mb-2">
+                {"QWERTYUIOP".split("").map((letter) => {
+                  const status = letterState.get(letter.toLowerCase());
+                  let keyClasses =
+                    "select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  if (status === "correct") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-success bg-lfp-success h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  } else if (status === "present") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-warning bg-lfp-warning h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  } else if (status === "absent") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-muted bg-lfp-muted h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  }
+                  return (
+                    <button
+                      key={letter}
+                      type="button"
+                      className={keyClasses}
+                      onClick={() => handleKeyInput(letter)}
+                      aria-label={`Letter ${letter}`}
+                      disabled={isComplete}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Row 2: 9 keys */}
+              <div className="grid grid-cols-9 gap-1 sm:gap-2 mb-2">
+                {"ASDFGHJKL".split("").map((letter) => {
+                  const status = letterState.get(letter.toLowerCase());
+                  let keyClasses =
+                    "select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  if (status === "correct") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-success bg-lfp-success h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  } else if (status === "present") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-warning bg-lfp-warning h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  } else if (status === "absent") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-muted bg-lfp-muted h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  }
+                  return (
+                    <button
+                      key={letter}
+                      type="button"
+                      className={keyClasses}
+                      onClick={() => handleKeyInput(letter)}
+                      aria-label={`Letter ${letter}`}
+                      disabled={isComplete}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Row 3: Enter + 7 keys + Delete (grid prevents overflow) */}
+              <div className="grid grid-cols-11 gap-1 sm:gap-2">
+                <button
+                  type="button"
+                  className="col-span-2 select-none rounded-2xl border border-lfp-border bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  onClick={() => handleKeyInput("ENTER")}
+                  disabled={isComplete}
+                  aria-label="Enter"
+                >
+                  Enter
+                </button>
+
+                {"ZXCVBNM".split("").map((letter) => {
+                  const status = letterState.get(letter.toLowerCase());
+                  let keyClasses =
+                    "select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  if (status === "correct") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-success bg-lfp-success h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  } else if (status === "present") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-warning bg-lfp-warning h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  } else if (status === "absent") {
+                    keyClasses =
+                      "select-none rounded-2xl border border-lfp-muted bg-lfp-muted h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                  }
+                  return (
+                    <button
+                      key={letter}
+                      type="button"
+                      className={keyClasses}
+                      onClick={() => handleKeyInput(letter)}
+                      aria-label={`Letter ${letter}`}
+                      disabled={isComplete}
+                    >
+                      {letter}
+                    </button>
+                  );
+                })}
+
+                <button
+                  type="button"
+                  className="col-span-2 select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  onClick={() => handleKeyInput("BACKSPACE")}
+                  disabled={isComplete}
+                  aria-label="Delete"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           </div>
         </div>
