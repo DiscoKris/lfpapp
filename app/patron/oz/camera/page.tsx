@@ -1,76 +1,99 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { db } from "../../../../lib/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const SHOW_ID = "OZ25";
 const DASHBOARD_PATH = "/patron/oz";
+const FILTERS = [
+  "/filters/oz_filter1.png",
+  "/filters/oz_filter2.png",
+  "/filters/oz_filter3.png",
+  "/filters/oz_filter4.png",
+  "/filters/oz_filter5.png",
+];
+const DOWNLOAD_FILENAME = "wonderful-winter-of-oz-selfie.png";
+
+type FacingMode = "user" | "environment";
 
 export default function CameraPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
-  // Local defaults; uploaded filter (if any) will be prepended
-  const [filters, setFilters] = useState<string[]>([
-    "/filters/oz_filter1.png",
-    "/filters/oz_filter2.png",
-    "/filters/oz_filter3.png",
-    "/filters/oz_filter4.png",
-    "/filters/oz_filter5.png",
-  ]);
   const [activeFilter, setActiveFilter] = useState(0);
   const [captured, setCaptured] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [err, setErr] = useState<string>("");
+  const [err, setErr] = useState("");
+  const [facingMode, setFacingMode] = useState<FacingMode>("user");
 
-  // Load uploaded filter from Firestore (filterUrl or cameraFilterUrl)
-  useEffect(() => {
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, "shows", SHOW_ID));
-        if (!snap.exists()) return;
-        const d = snap.data() as any;
-        const uploaded = (d?.filterUrl ?? d?.cameraFilterUrl ?? "") as string;
-        if (uploaded) {
-          setFilters((prev) => [uploaded, ...prev]);
-          setActiveFilter(0);
-        }
-      } catch (e) {
-        console.error(e);
-        setErr("Could not load camera filter.");
-      }
-    })();
+  const stopStream = useCallback(() => {
+    const stream = videoRef.current?.srcObject as MediaStream | null;
+    if (!stream) return;
+    stream.getTracks().forEach((track) => track.stop());
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
   }, []);
 
-  // Try to start camera automatically (some browsers allow it)
+  const startCamera = useCallback(
+    async (silent = false) => {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setErr("Camera not supported on this device.");
+        return;
+      }
+
+      try {
+        setErr("");
+        setReady(false);
+        stopStream();
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode,
+            width: { ideal: 1080 },
+            height: { ideal: 1920 },
+          },
+          audio: false,
+        });
+
+        const video = videoRef.current;
+        if (!video) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        video.srcObject = stream;
+        await video.play();
+        setReady(true);
+      } catch (error) {
+        console.error(error);
+        stopStream();
+        if (!silent) {
+          setErr("Camera permission denied or unavailable. Please allow access and try again.");
+        }
+      }
+    },
+    [facingMode, stopStream]
+  );
+
   useEffect(() => {
     startCamera(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      stopStream();
+    };
+  }, [startCamera, stopStream]);
+
+  const nextFilter = useCallback(() => {
+    setActiveFilter((idx) => (idx + 1) % FILTERS.length);
   }, []);
 
-  async function startCamera(silent = false) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1080 }, height: { ideal: 1920 } },
-        audio: false,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setReady(true);
-      }
-    } catch (e) {
-      console.error(e);
-      if (!silent) setErr("Camera permission denied or unavailable.");
-    }
-  }
+  const prevFilter = useCallback(() => {
+    setActiveFilter((idx) => (idx - 1 + FILTERS.length) % FILTERS.length);
+  }, []);
 
-  // Swipe gestures
-  const touchStartX = useRef<number | null>(null);
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.changedTouches[0]?.clientX ?? null;
   }
+
   function onTouchEnd(e: React.TouchEvent) {
     if (touchStartX.current == null) return;
     const endX = e.changedTouches[0]?.clientX ?? touchStartX.current;
@@ -82,94 +105,110 @@ export default function CameraPage() {
     }
     touchStartX.current = null;
   }
-  const nextFilter = () => setActiveFilter((i) => (i + 1) % filters.length);
-  const prevFilter = () => setActiveFilter((i) => (i - 1 + filters.length) % filters.length);
 
-  // Capture with overlay (wait for overlay load → Safari-safe)
   async function handleCapture() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    const w = video.videoWidth || 1080;
-    const h = video.videoHeight || 1920;
-    canvas.width = w;
-    canvas.height = h;
+    const width = video.videoWidth || 1080;
+    const height = video.videoHeight || 1920;
+    canvas.width = width;
+    canvas.height = height;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // 1) Draw camera frame
-    ctx.drawImage(video, 0, 0, w, h);
+    ctx.drawImage(video, 0, 0, width, height);
 
-    // 2) Ensure overlay is loaded before drawing
     const overlay = new Image();
     overlay.crossOrigin = "anonymous";
-    overlay.src = filters[activeFilter];
+    const overlaySrc = FILTERS[activeFilter] ?? FILTERS[0];
+    overlay.src = overlaySrc;
     await new Promise<void>((resolve) => {
       if (overlay.complete) return resolve();
       overlay.onload = () => resolve();
-      overlay.onerror = () => resolve(); // fail-open
+      overlay.onerror = () => resolve();
     });
 
-    // 3) Draw overlay stretched to cover
     try {
-      ctx.drawImage(overlay, 0, 0, w, h);
+      ctx.drawImage(overlay, 0, 0, width, height);
     } catch {
-      // ignore draw failure; still export camera frame
+      // continue without overlay if drawing fails
     }
 
-    // 4) Export to PNG data URL
     try {
       const dataUrl = canvas.toDataURL("image/png");
       setCaptured(dataUrl);
-    } catch (e) {
-      console.error("Export failed:", e);
+    } catch (error) {
+      console.error("Export failed:", error);
       setCaptured(canvas.toDataURL("image/png"));
     }
   }
 
-  // Share / Download
-  async function handleShare() {
-    if (!captured) return;
-    const blob = await (await fetch(captured)).blob();
-    const file = new File([blob], "lfp-selfie.png", { type: "image/png" });
+  const getCapturedBlob = useCallback(async () => {
+    if (!captured) return null;
+    const response = await fetch(captured);
+    return await response.blob();
+  }, [captured]);
 
-    const n = navigator as any;
-    if (n.canShare && n.canShare({ files: [file] })) {
-      try {
-        await n.share({
-          files: [file],
-          title: "Lythgoe Selfie",
-          text: "Snapped at the show!",
-        });
-        return;
-      } catch {
-        // fall through to download
-      }
-    }
+  function triggerDownload(blob: Blob) {
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "lfp-selfie.png";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = DOWNLOAD_FILENAME;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
     URL.revokeObjectURL(url);
   }
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      const stream = videoRef.current?.srcObject as MediaStream | undefined;
-      stream?.getTracks().forEach((t) => t.stop());
+  async function handleShare() {
+    const blob = await getCapturedBlob();
+    if (!blob) return;
+
+    const file = new File([blob], DOWNLOAD_FILENAME, { type: "image/png" });
+    const nav = navigator as Navigator & {
+      canShare?: (data: ShareData) => boolean;
+      share?: (data: ShareData) => Promise<void>;
     };
-  }, []);
+
+    if (nav.canShare?.({ files: [file] })) {
+      try {
+        await nav.share?.({
+          files: [file],
+          title: "Wonderful Winter of Oz Selfie",
+          text: "Snapped at The Wonderful Winter of Oz!",
+        });
+        return;
+      } catch (error) {
+        console.warn("Share cancelled or failed, falling back to download.", error);
+      }
+    }
+
+    triggerDownload(blob);
+  }
+
+  async function handleDownload() {
+    const blob = await getCapturedBlob();
+    if (!blob) return;
+    triggerDownload(blob);
+  }
+
+  function handleRetake() {
+    setCaptured(null);
+  }
+
+  function toggleCamera() {
+    setCaptured(null);
+    setFacingMode((prev) => (prev === "user" ? "environment" : "user"));
+  }
+
+  const filterSrc = FILTERS[activeFilter] ?? FILTERS[0];
 
   return (
     <main className="min-h-screen bg-black text-white p-4">
       <div className="max-w-sm mx-auto">
-        {/* Back */}
         <a
           href={DASHBOARD_PATH}
           className="inline-block mb-4 px-4 py-2 bg-white/15 hover:bg-white/25 rounded-xl text-sm"
@@ -179,7 +218,6 @@ export default function CameraPage() {
 
         <h1 className="text-xl font-semibold mb-3">Camera</h1>
 
-        {/* Live camera + overlay */}
         <div
           className="relative w-full rounded-xl overflow-hidden bg-black"
           style={{ aspectRatio: "9/16" }}
@@ -187,14 +225,12 @@ export default function CameraPage() {
           onTouchEnd={onTouchEnd}
         >
           <video ref={videoRef} playsInline muted className="w-full h-full object-cover" />
-          {/* Overlay PNG (FILL the frame) */}
           <img
-            src={filters[activeFilter]}
+            src={filterSrc}
             alt="Filter overlay"
             className="absolute inset-0 w-full h-full object-cover pointer-events-none"
           />
 
-          {/* Left/Right nubs */}
           <button
             onClick={prevFilter}
             className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white rounded-full px-3 py-1"
@@ -211,51 +247,72 @@ export default function CameraPage() {
           </button>
         </div>
 
-        {/* Controls */}
-        {!ready ? (
+        <div className="mt-4 flex flex-col gap-3">
+          {ready ? (
+            <button
+              onClick={handleCapture}
+              className="w-full py-3 bg-red-700 hover:bg-red-600 rounded-xl font-semibold"
+            >
+              Capture 📸
+            </button>
+          ) : (
+            <button
+              onClick={() => startCamera(false)}
+              className="w-full py-3 bg-red-700 hover:bg-red-600 rounded-xl font-semibold"
+            >
+              Start Camera
+            </button>
+          )}
+
           <button
-            onClick={() => startCamera(false)}
-            className="mt-4 w-full py-3 bg-red-700 hover:bg-red-600 rounded-xl font-semibold"
+            onClick={toggleCamera}
+            className="w-full py-3 bg-white/15 hover:bg-white/25 rounded-xl font-semibold"
           >
-            Start Camera
+            Use {facingMode === "user" ? "Back" : "Front"} Camera
           </button>
-        ) : (
-          <button
-            onClick={handleCapture}
-            className="mt-4 w-full py-3 bg-red-700 hover:bg-red-600 rounded-xl font-semibold"
-          >
-            Capture 📸
-          </button>
+        </div>
+
+        {err && (
+          <div className="mt-3 text-sm text-yellow-300 space-y-2">
+            <p>{err}</p>
+            <button
+              onClick={() => startCamera(false)}
+              className="inline-flex items-center justify-center rounded-lg bg-white/15 px-3 py-2 font-semibold text-white hover:bg-white/25"
+            >
+              Retry
+            </button>
+          </div>
         )}
 
-        {err && <p className="mt-2 text-yellow-300 text-sm">{err}</p>}
-
-        {/* Review screen */}
         {captured && (
           <div className="mt-5 text-center">
             <img src={captured} alt="Captured" className="w-full rounded-xl shadow-lg" />
-            <div className="flex gap-4 mt-4">
+            <div className="mt-4 flex flex-col gap-3">
               <button
                 onClick={handleShare}
-                className="flex-1 py-3 bg-green-600 hover:bg-green-500 rounded-xl font-semibold"
+                className="w-full py-3 bg-green-600 hover:bg-green-500 rounded-xl font-semibold"
               >
                 Share
               </button>
               <button
-                onClick={() => setCaptured(null)}
-                className="flex-1 py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-semibold"
+                onClick={handleDownload}
+                className="w-full py-3 bg-red-700 hover:bg-red-600 rounded-xl font-semibold"
+              >
+                Download / Save
+              </button>
+              <button
+                onClick={handleRetake}
+                className="w-full py-3 bg-gray-600 hover:bg-gray-500 rounded-xl font-semibold"
               >
                 Retake
               </button>
             </div>
-            {/* Helpful hint for saving to camera roll */}
             <p className="mt-3 text-xs opacity-80">
-              Tip: On iPhone/Android, use Share → “Save Image” to add it to your camera roll.
+              Tip: If the download dialog does not appear, use Share → “Save Image” to add it to your camera roll.
             </p>
           </div>
         )}
 
-        {/* Hidden canvas */}
         <canvas ref={canvasRef} className="hidden" />
       </div>
     </main>
