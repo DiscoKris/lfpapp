@@ -63,7 +63,8 @@ export default function GamesDashboard({
     {
       title: "Wordle World",
       description: "Guess the word related to the show.",
-      path: `${normalizedBasePath}/wordle${query}`,
+      // Remove "/games" from the path so it routes correctly
+      path: `${normalizedBasePath.replace(/\/games$/, "")}/wordle${query}`,
       Icon: typeof Search === "function" ? Search : undefined,
       fallbackEmoji: "🔍",
       emojiLabel: "Magnifying glass",
