@@ -10,12 +10,19 @@ export default function BackButton() {
 
   const handleBack = () => {
     const parts = pathname.split("/").filter(Boolean);
+
+    if (pathname === "/app/patron") {
+      // if on the Patron dashboard, go to the main app homepage
+      window.location.href = "https://app.lythgoefamily.com";
+      return;
+    }
+
     if (parts.length > 2) {
-      // remove the last segment to go up one level
+      // go up one level
       const parentPath = "/" + parts.slice(0, -1).join("/");
       router.push(parentPath);
     } else {
-      // stay on /app/patron if at or above that level
+      // stop at /app/patron
       router.push("/app/patron");
     }
   };
