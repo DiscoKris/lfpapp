@@ -60,15 +60,15 @@ export default function GamesDashboard({
       fallbackEmoji: "🧩",
       emojiLabel: "Word search puzzle",
     },
-    {
-      title: "Wordle World",
-      description: "Guess the word related to the show.",
-      // Remove "/games" from the path so it routes correctly
-      path: `${normalizedBasePath.replace(/\/games$/, "")}/wordle${query}`,
-      Icon: typeof Search === "function" ? Search : undefined,
-      fallbackEmoji: "🔍",
-      emojiLabel: "Magnifying glass",
-    },
+   {
+  title: "Wordle World",
+  description: "Guess the word related to the show.",
+  path: `${normalizedBasePath}/wordle${query}`, // → /patron/oz/games/wordle
+  Icon: typeof Search === "function" ? Search : undefined,
+  fallbackEmoji: "🔍",
+  emojiLabel: "Magnifying glass",
+},
+
     {
       title: "Quiz",
       description: "Test your show knowledge with quick questions.",
