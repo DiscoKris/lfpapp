@@ -45,7 +45,7 @@ function InlineBackButton() {
     <button
       type="button"
       onClick={handleBack}
-      className="inline-flex items-center gap-2 rounded-2xl border border-lfp-border px-4 py-2 text-sm font-medium text-lfp-text transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1"
+      className="inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-medium text-white transition-colors hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
     >
       <span aria-hidden>←</span>
       Back
@@ -130,7 +130,7 @@ export default function SnowWhiteWordlePage() {
     return candidates[index];
   }, [todayKey, wordList]);
 
-  // Load word list from Firestore
+  // Load list from Firestore
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -154,7 +154,7 @@ export default function SnowWhiteWordlePage() {
     };
   }, []);
 
-  // Restore/save local state
+  // Restore/save state
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(storageKey);
@@ -166,7 +166,6 @@ export default function SnowWhiteWordlePage() {
       setLost(false);
       return;
     }
-
     try {
       const parsed = JSON.parse(raw) as StoredState;
       if (parsed.solution !== solution) {
@@ -183,8 +182,7 @@ export default function SnowWhiteWordlePage() {
       setWon(Boolean(parsed.won));
       setLost(Boolean(parsed.lost));
       setCurrentGuess("");
-    } catch (error) {
-      console.error("Failed to parse stored Wordle state:", error);
+    } catch {
       window.localStorage.removeItem(storageKey);
       setGuesses([]);
       setStatuses([]);
@@ -283,8 +281,7 @@ export default function SnowWhiteWordlePage() {
       row.forEach((status, colIndex) => {
         const letter = guesses[rowIndex]?.[colIndex];
         if (!letter) return;
-        const existing = map.get(letter);
-        map.set(letter, getBestStatus(existing, status));
+        map.set(letter, getBestStatus(map.get(letter), status));
       });
     });
     return map;
@@ -314,11 +311,11 @@ export default function SnowWhiteWordlePage() {
   }, [isComplete, won, solution]);
 
   return (
-    <main className="flex min-h-screen flex-col bg-lfp-muted text-lfp-text">
-      <header className="sticky top-0 z-10 border-b border-lfp-border bg-lfp-surface px-4 py-3">
+    <main className="flex min-h-screen flex-col bg-gradient-to-b from-black via-[#330008] to-black text-white">
+      <header className="sticky top-0 z-10 border-b border-white/10 bg-white/5 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <InlineBackButton />
-          <h1 className="text-lg font-semibold text-lfp-text md:text-xl">Snow White Wordle</h1>
+          <h1 className="text-lg font-semibold md:text-xl">Snow White Wordle</h1>
           <span className="w-[96px] md:w-[120px]" aria-hidden />
         </div>
       </header>
@@ -326,12 +323,12 @@ export default function SnowWhiteWordlePage() {
       <section className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 pb-16 pt-6">
         <div className="flex flex-col items-center gap-6">
           {loadingWords && (
-            <p className="text-sm text-lfp-text-weak">Fetching today’s word list…</p>
+            <p className="text-sm text-white/70">Fetching today’s word list…</p>
           )}
 
           {/* Board */}
           <div
-            className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-6 shadow-sm"
+            className="w-full rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_40px_-20px_rgba(255,0,0,0.35)]"
             role="application"
             aria-label="Snow White Wordle board"
           >
@@ -349,20 +346,22 @@ export default function SnowWhiteWordlePage() {
                       const status = currentStatuses[colIdx];
                       const isActiveRow = rowIdx === guesses.length && !isComplete;
                       const displayLetter = letter.trim() ? letter.toUpperCase() : "";
+
                       let classes =
-                        "flex h-14 items-center justify-center rounded-2xl border border-lfp-border bg-lfp-surface text-lg font-semibold text-lfp-text transition-colors md:h-16 md:text-xl";
+                        "flex h-14 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-lg font-semibold text-white transition-colors md:h-16 md:text-xl";
                       if (status === "correct") {
                         classes =
-                          "flex h-14 items-center justify-center rounded-2xl border border-lfp-success bg-lfp-success text-lg font-semibold text-white transition-colors md:h-16 md:text-xl";
+                          "flex h-14 items-center justify-center rounded-2xl border border-emerald-500/80 bg-emerald-600 text-lg font-semibold text-white transition-colors md:h-16 md:text-xl";
                       } else if (status === "present") {
                         classes =
-                          "flex h-14 items-center justify-center rounded-2xl border border-lfp-warning bg-lfp-warning text-lg font-semibold text-white transition-colors md:h-16 md:text-xl";
+                          "flex h-14 items-center justify-center rounded-2xl border border-amber-500/80 bg-amber-500 text-lg font-semibold text-black transition-colors md:h-16 md:text-xl";
                       } else if (status === "absent") {
                         classes =
-                          "flex h-14 items-center justify-center rounded-2xl border border-lfp-muted bg-lfp-muted text-lg font-semibold text-lfp-text transition-colors md:h-16 md:text-xl";
+                          "flex h-14 items-center justify-center rounded-2xl border border-white/10 bg-black/30 text-lg font-semibold text-white/60 transition-colors md:h-16 md:text-xl";
                       } else if (isActiveRow && displayLetter) {
-                        classes += " border-lfp-primary text-lfp-text";
+                        classes += " border-white/40";
                       }
+
                       return (
                         <div key={`cell-${rowIdx}-${colIdx}`} className={classes}>
                           {displayLetter}
@@ -377,37 +376,43 @@ export default function SnowWhiteWordlePage() {
 
           {/* Feedback bubble */}
           {feedback && (
-            <div className="rounded-full border border-lfp-warning bg-lfp-surface px-4 py-2 text-sm text-lfp-text" role="status">
+            <div
+              className="rounded-full border border-amber-500/60 bg-black/30 px-4 py-2 text-sm text-white"
+              role="status"
+            >
               {feedback}
             </div>
           )}
 
           {/* Result banner */}
           {isComplete && bannerMessage && (
-            <div className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 text-center text-sm text-lfp-text" role="status">
+            <div
+              className="w-full rounded-3xl border border-white/10 bg-white/5 p-4 text-center text-sm text-white"
+              role="status"
+            >
               <p className="font-semibold">{bannerMessage}</p>
-              <p className="mt-1 text-xs text-lfp-text-weak">New word at midnight.</p>
+              <p className="mt-1 text-xs text-white/70">New word at midnight.</p>
             </div>
           )}
 
           {/* Keyboard */}
-          <div className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 shadow-sm">
+          <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_20px_40px_-20px_rgba(255,0,0,0.35)]">
             <div className="mx-auto w-full max-w-[720px]">
               {/* Row 1 */}
               <div className="mb-2 grid grid-cols-10 gap-1 sm:gap-2">
                 {"QWERTYUIOP".split("").map((letter) => {
                   const status = letterState.get(letter.toLowerCase());
                   let keyClasses =
-                    "select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                    "select-none rounded-2xl border border-white/15 bg-white/10 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   if (status === "correct") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-success bg-lfp-success h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-emerald-500/80 bg-emerald-600 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   } else if (status === "present") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-warning bg-lfp-warning h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-amber-500/80 bg-amber-500 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   } else if (status === "absent") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-muted bg-lfp-muted h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-white/10 bg-black/30 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   }
                   return (
                     <button
@@ -429,16 +434,16 @@ export default function SnowWhiteWordlePage() {
                 {"ASDFGHJKL".split("").map((letter) => {
                   const status = letterState.get(letter.toLowerCase());
                   let keyClasses =
-                    "select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                    "select-none rounded-2xl border border-white/15 bg-white/10 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   if (status === "correct") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-success bg-lfp-success h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-emerald-500/80 bg-emerald-600 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   } else if (status === "present") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-warning bg-lfp-warning h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-amber-500/80 bg-amber-500 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   } else if (status === "absent") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-muted bg-lfp-muted h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-white/10 bg-black/30 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   }
                   return (
                     <button
@@ -459,7 +464,7 @@ export default function SnowWhiteWordlePage() {
               <div className="grid grid-cols-11 gap-1 sm:gap-2">
                 <button
                   type="button"
-                  className="col-span-2 select-none rounded-2xl border border-lfp-primary bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  className="col-span-2 select-none rounded-2xl border border-red-500/70 bg-red-600 h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors hover:border-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-60"
                   onClick={() => handleKeyInput("ENTER")}
                   disabled={isComplete}
                   aria-label="Enter"
@@ -470,16 +475,16 @@ export default function SnowWhiteWordlePage() {
                 {"ZXCVBNM".split("").map((letter) => {
                   const status = letterState.get(letter.toLowerCase());
                   let keyClasses =
-                    "select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                    "select-none rounded-2xl border border-white/15 bg-white/10 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   if (status === "correct") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-success bg-lfp-success h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-emerald-500/80 bg-emerald-600 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   } else if (status === "present") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-warning bg-lfp-warning h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-amber-500/80 bg-amber-500 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   } else if (status === "absent") {
                     keyClasses =
-                      "select-none rounded-2xl border border-lfp-muted bg-lfp-muted h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1";
+                      "select-none rounded-2xl border border-white/10 bg-black/30 h-10 sm:h-12 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50";
                   }
                   return (
                     <button
@@ -497,7 +502,7 @@ export default function SnowWhiteWordlePage() {
 
                 <button
                   type="button"
-                  className="col-span-2 select-none rounded-2xl border border-lfp-primary bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  className="col-span-2 select-none rounded-2xl border border-red-500/70 bg-red-600 h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-white transition-colors hover:border-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 disabled:opacity-60"
                   onClick={() => handleKeyInput("BACKSPACE")}
                   disabled={isComplete}
                   aria-label="Delete"
