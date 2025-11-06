@@ -5,20 +5,18 @@ import { usePathname, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../../../lib/firebaseConfig";
 
+const SHOW_ID = "OZ";
+const WORD_LENGTH = 6;
+
 const FALLBACK_WORDS = [
-  "ozian",
-  "toto",
-  "lions",
-  "witch",
-  "glinda",
   "yellow",
-  "poppy",
+  "wizard",
+  "glinda",
   "tinman",
-  "emerald",
-  "rainbow",
-  "twister",
-  "dorothy",
-  "broom",
+  "wicked",
+  "brooms",
+  "bricks",
+  "follow",
 ];
 
 const MAX_GUESSES = 6;
@@ -120,22 +118,22 @@ export default function WordOfOzPage() {
   const storageKey = `lfp-wordle-OZ-${todayKey}`;
 
   const solution = useMemo(() => {
-    const cleaned = wordList.map((w) => w.trim().toLowerCase()).filter(Boolean);
-    if (cleaned.length === 0) {
-      return FALLBACK_WORDS[0];
-    }
+    const cleaned = wordList
+      .map((w) => String(w).trim().toLowerCase())
+      .filter((w) => /^[a-z]{6}$/.test(w));
+    const candidates = cleaned.length > 0 ? cleaned : FALLBACK_WORDS;
     const seed = `OZ-${todayKey}`;
-    const index = hashSeed(seed) % cleaned.length;
-    return cleaned[index];
+    const index = hashSeed(seed) % candidates.length;
+    return candidates[index];
   }, [todayKey, wordList]);
 
-  const solutionLength = solution.length;
+  const solutionLength = WORD_LENGTH;
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const snap = await getDoc(doc(db, "shows", "OZ"));
+        const snap = await getDoc(doc(db, "shows", SHOW_ID));
         if (snap.exists()) {
           const data = snap.data();
           const remoteList = Array.isArray(data?.wordleWords) ? data.wordleWords : [];
@@ -215,8 +213,8 @@ export default function WordOfOzPage() {
 
   const submitGuess = useCallback(() => {
     const trimmed = currentGuess.trim().toLowerCase();
-    if (trimmed.length !== solutionLength) {
-      setFeedback(`Needs ${solutionLength} letters.`);
+    if (trimmed.length !== WORD_LENGTH) {
+      setFeedback(`Needs ${WORD_LENGTH} letters.`);
       return;
     }
     if (!/^[a-z]+$/.test(trimmed)) {
@@ -237,7 +235,7 @@ export default function WordOfOzPage() {
     if (nextGuesses.length >= MAX_GUESSES) {
       setLost(true);
     }
-  }, [currentGuess, solution, solutionLength, guesses, statuses]);
+  }, [currentGuess, solution, guesses, statuses]);
 
   const handleKeyInput = useCallback(
     (value: string) => {
@@ -252,12 +250,12 @@ export default function WordOfOzPage() {
       }
       if (/^[a-zA-Z]$/.test(value)) {
         setCurrentGuess((prev) => {
-          if (prev.length >= solutionLength) return prev;
+          if (prev.length >= WORD_LENGTH) return prev;
           return prev + value.toLowerCase();
         });
       }
     },
-    [isComplete, submitGuess, solutionLength]
+    [isComplete, submitGuess]
   );
 
   useEffect(() => {
@@ -482,7 +480,7 @@ export default function WordOfOzPage() {
               <div className="grid grid-cols-11 gap-1 sm:gap-2">
                 <button
                   type="button"
-                  className="col-span-2 select-none rounded-2xl border border-lfp-border bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  className="col-span-2 select-none rounded-2xl border border-lfp-primary bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
                   onClick={() => handleKeyInput("ENTER")}
                   disabled={isComplete}
                   aria-label="Enter"
@@ -520,7 +518,7 @@ export default function WordOfOzPage() {
 
                 <button
                   type="button"
-                  className="col-span-2 select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  className="col-span-2 select-none rounded-2xl border border-lfp-primary bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
                   onClick={() => handleKeyInput("BACKSPACE")}
                   disabled={isComplete}
                   aria-label="Delete"

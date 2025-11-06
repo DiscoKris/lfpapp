@@ -6,22 +6,20 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../../../lib/firebaseConfig";
 
 const SHOW_ID = "SW";
+const WORD_LENGTH = 6;
 
 const FALLBACK_WORDS = [
   "mirror",
-  "apple",
   "forest",
-  "queen",
   "castle",
   "prince",
   "dwarfs",
   "grumpy",
   "sleepy",
-  "bashful",
   "sneezy",
-  "happy",
-  "dopey",
-  "doc",
+  "wicked",
+  "apples",
+  "poison",
 ];
 
 const MAX_GUESSES = 6;
@@ -123,16 +121,15 @@ export default function SnowWhiteWordlePage() {
   const storageKey = `lfp-wordle-SW-${todayKey}`;
 
   const solution = useMemo(() => {
-    const cleaned = wordList.map((w) => w.trim().toLowerCase()).filter(Boolean);
-    if (cleaned.length === 0) {
-      return FALLBACK_WORDS[0];
-    }
+    const cleaned = wordList
+      .map((w) => String(w).trim().toLowerCase())
+      .filter((w) => /^[a-z]{6}$/.test(w));
+    const candidates = cleaned.length > 0 ? cleaned : FALLBACK_WORDS;
     const seed = `SW-${todayKey}`;
-    const index = hashSeed(seed) % cleaned.length;
-    return cleaned[index];
+    const index = hashSeed(seed) % candidates.length;
+    return candidates[index];
   }, [todayKey, wordList]);
 
-  const solutionLength = solution.length;
 
   useEffect(() => {
     let mounted = true;
@@ -218,8 +215,8 @@ export default function SnowWhiteWordlePage() {
 
   const submitGuess = useCallback(() => {
     const trimmed = currentGuess.trim().toLowerCase();
-    if (trimmed.length !== solutionLength) {
-      setFeedback(`Needs ${solutionLength} letters.`);
+    if (trimmed.length !== WORD_LENGTH) {
+      setFeedback(`Needs ${WORD_LENGTH} letters.`);
       return;
     }
     if (!/^[a-z]+$/.test(trimmed)) {
@@ -240,7 +237,7 @@ export default function SnowWhiteWordlePage() {
     if (nextGuesses.length >= MAX_GUESSES) {
       setLost(true);
     }
-  }, [currentGuess, solution, solutionLength, guesses, statuses]);
+  }, [currentGuess, solution, guesses, statuses]);
 
   const handleKeyInput = useCallback(
     (value: string) => {
@@ -255,12 +252,12 @@ export default function SnowWhiteWordlePage() {
       }
       if (/^[a-zA-Z]$/.test(value)) {
         setCurrentGuess((prev) => {
-          if (prev.length >= solutionLength) return prev;
+          if (prev.length >= WORD_LENGTH) return prev;
           return prev + value.toLowerCase();
         });
       }
     },
-    [isComplete, submitGuess, solutionLength]
+    [isComplete, submitGuess]
   );
 
   useEffect(() => {
@@ -304,19 +301,19 @@ export default function SnowWhiteWordlePage() {
         return guesses[index];
       }
       if (index === guesses.length && !isComplete) {
-        return currentGuess.padEnd(solutionLength, " ");
+        return currentGuess.padEnd(WORD_LENGTH, " ");
       }
-      return "".padEnd(solutionLength, " ");
+      return "".padEnd(WORD_LENGTH, " ");
     });
-  }, [guesses, currentGuess, solutionLength, isComplete]);
+  }, [guesses, currentGuess, isComplete]);
 
   const rowStatuses = useMemo(() => {
     return Array.from({ length: MAX_GUESSES }, (_, index) => {
       if (index < statuses.length) return statuses[index];
       // keep array length consistent for mapping
-      return Array(solutionLength).fill(null) as unknown as TileStatus[];
+      return Array(WORD_LENGTH).fill(null) as unknown as TileStatus[];
     });
-  }, [statuses, solutionLength]);
+  }, [statuses]);
 
   const keyboardRows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
@@ -362,7 +359,7 @@ export default function SnowWhiteWordlePage() {
                     key={`row-${rowIdx}`}
                     className="grid gap-2"
                     style={{
-                      gridTemplateColumns: `repeat(${solutionLength}, minmax(0, 1fr))`,
+                      gridTemplateColumns: `repeat(${WORD_LENGTH}, minmax(0, 1fr))`,
                     }}
                   >
                     {letters.map((letter, colIdx) => {
@@ -485,7 +482,7 @@ export default function SnowWhiteWordlePage() {
               <div className="grid grid-cols-11 gap-1 sm:gap-2">
                 <button
                   type="button"
-                  className="col-span-2 select-none rounded-2xl border border-lfp-border bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  className="col-span-2 select-none rounded-2xl border border-lfp-primary bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
                   onClick={() => handleKeyInput("ENTER")}
                   disabled={isComplete}
                   aria-label="Enter"
@@ -523,7 +520,7 @@ export default function SnowWhiteWordlePage() {
 
                 <button
                   type="button"
-                  className="col-span-2 select-none rounded-2xl border border-lfp-border bg-lfp-surface h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-text transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
+                  className="col-span-2 select-none rounded-2xl border border-lfp-primary bg-lfp-primary h-10 sm:h-12 px-2 text-center text-[clamp(12px,3.5vw,16px)] font-semibold text-lfp-surface transition-colors hover:border-lfp-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lfp-accent focus-visible:ring-offset-1 disabled:opacity-60"
                   onClick={() => handleKeyInput("BACKSPACE")}
                   disabled={isComplete}
                   aria-label="Delete"
