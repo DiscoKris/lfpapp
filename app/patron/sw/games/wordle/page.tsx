@@ -5,20 +5,23 @@ import { usePathname, useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../../../../lib/firebaseConfig";
 
+const SHOW_ID = "SW";
+
 const FALLBACK_WORDS = [
-  "ozian",
-  "toto",
-  "lions",
-  "witch",
-  "glinda",
-  "yellow",
-  "poppy",
-  "tinman",
-  "emerald",
-  "rainbow",
-  "twister",
-  "dorothy",
-  "broom",
+  "mirror",
+  "apple",
+  "forest",
+  "queen",
+  "castle",
+  "prince",
+  "dwarfs",
+  "grumpy",
+  "sleepy",
+  "bashful",
+  "sneezy",
+  "happy",
+  "dopey",
+  "doc",
 ];
 
 const MAX_GUESSES = 6;
@@ -29,12 +32,12 @@ function InlineBackButton() {
   const pathname = usePathname();
 
   const handleBack = useCallback(() => {
-    if (pathname.startsWith("/patron/oz/games") && pathname !== "/patron/oz/games") {
-      router.push("/patron/oz/games");
+    if (pathname.startsWith("/patron/sw/games") && pathname !== "/patron/sw/games") {
+      router.push("/patron/sw/games");
       return;
     }
-    if (pathname.startsWith("/patron/oz") && pathname !== "/patron/oz") {
-      router.push("/patron/oz");
+    if (pathname.startsWith("/patron/sw") && pathname !== "/patron/sw") {
+      router.push("/patron/sw");
       return;
     }
     router.back();
@@ -106,7 +109,7 @@ type StoredState = {
   lost: boolean;
 };
 
-export default function WordOfOzPage() {
+export default function SnowWhiteWordlePage() {
   const [wordList, setWordList] = useState<string[]>(FALLBACK_WORDS);
   const [loadingWords, setLoadingWords] = useState(true);
   const [guesses, setGuesses] = useState<string[]>([]);
@@ -117,14 +120,14 @@ export default function WordOfOzPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const todayKey = useMemo(() => formatDateKey(new Date()), []);
-  const storageKey = `lfp-wordle-OZ-${todayKey}`;
+  const storageKey = `lfp-wordle-SW-${todayKey}`;
 
   const solution = useMemo(() => {
     const cleaned = wordList.map((w) => w.trim().toLowerCase()).filter(Boolean);
     if (cleaned.length === 0) {
       return FALLBACK_WORDS[0];
     }
-    const seed = `OZ-${todayKey}`;
+    const seed = `SW-${todayKey}`;
     const index = hashSeed(seed) % cleaned.length;
     return cleaned[index];
   }, [todayKey, wordList]);
@@ -135,7 +138,7 @@ export default function WordOfOzPage() {
     let mounted = true;
     (async () => {
       try {
-        const snap = await getDoc(doc(db, "shows", "OZ"));
+        const snap = await getDoc(doc(db, "shows", SHOW_ID));
         if (snap.exists()) {
           const data = snap.data();
           const remoteList = Array.isArray(data?.wordleWords) ? data.wordleWords : [];
@@ -330,7 +333,7 @@ export default function WordOfOzPage() {
       <header className="sticky top-0 z-10 border-b border-lfp-border bg-lfp-surface px-4 py-3">
         <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-4">
           <InlineBackButton />
-          <h1 className="text-lg font-semibold text-lfp-text md:text-xl">Word of Oz</h1>
+          <h1 className="text-lg font-semibold text-lfp-text md:text-xl">Snow White Wordle</h1>
           <span className="w-[96px] md:w-[120px]" aria-hidden />
         </div>
       </header>
@@ -345,7 +348,7 @@ export default function WordOfOzPage() {
           <div
             className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-6 shadow-sm"
             role="application"
-            aria-label="Word of Oz board"
+            aria-label="Snow White Wordle board"
           >
             <div
               className="grid gap-2"
