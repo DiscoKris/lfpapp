@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 
-const GRID_SIZE = 12;
+const GRID_SIZE = 10;
 const WORDS = [
   "APPLE",
   "QUEEN",
@@ -404,7 +404,7 @@ export default function SwWordSearchPage() {
 
             <div
               ref={gridRef}
-              className="mx-auto grid aspect-square w-full max-w-xl select-none grid-cols-12 gap-1 rounded-3xl border border-white/10 bg-white/10 p-3"
+              className="mx-auto grid aspect-square w-full max-w-xl select-none grid-cols-10 gap-1 rounded-3xl border border-white/10 bg-white/10 p-3"
             >
               {puzzle.grid.map((rowLetters, row) =>
                 rowLetters.map((letter, col) => {
@@ -412,7 +412,7 @@ export default function SwWordSearchPage() {
                   const isFound = foundCells.has(index);
                   const isActive = activePathState.includes(index);
                   const baseStyles =
-                    "relative flex items-center justify-center rounded-lg border border-black/5 text-lg font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b60000]";
+                    "relative flex items-center justify-center rounded-lg border border-black/5 text-xl font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#b60000]";
                   const stateStyles = isFound
                     ? "bg-[#7a0000] text-white pointer-events-none"
                     : isActive
