@@ -7,6 +7,7 @@ import { db } from "../../../../../lib/firebaseConfig";
 
 const SHOW_ID = "SW";
 const WORD_LENGTH = 6;
+const MAX_GUESSES = 6;
 
 const FALLBACK_WORDS = [
   "mirror",
@@ -22,7 +23,6 @@ const FALLBACK_WORDS = [
   "poison",
 ];
 
-const MAX_GUESSES = 6;
 type TileStatus = "correct" | "present" | "absent";
 
 function InlineBackButton() {
@@ -130,7 +130,7 @@ export default function SnowWhiteWordlePage() {
     return candidates[index];
   }, [todayKey, wordList]);
 
-
+  // Load word list from Firestore
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -154,6 +154,7 @@ export default function SnowWhiteWordlePage() {
     };
   }, []);
 
+  // Restore/save local state
   useEffect(() => {
     if (typeof window === "undefined") return;
     const raw = window.localStorage.getItem(storageKey);
@@ -195,13 +196,7 @@ export default function SnowWhiteWordlePage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const payload: StoredState = {
-      solution,
-      guesses,
-      statuses,
-      won,
-      lost,
-    };
+    const payload: StoredState = { solution, guesses, statuses, won, lost };
     window.localStorage.setItem(storageKey, JSON.stringify(payload));
   }, [guesses, statuses, won, lost, solution, storageKey]);
 
@@ -297,12 +292,8 @@ export default function SnowWhiteWordlePage() {
 
   const rows = useMemo(() => {
     return Array.from({ length: MAX_GUESSES }, (_, index) => {
-      if (index < guesses.length) {
-        return guesses[index];
-      }
-      if (index === guesses.length && !isComplete) {
-        return currentGuess.padEnd(WORD_LENGTH, " ");
-      }
+      if (index < guesses.length) return guesses[index];
+      if (index === guesses.length && !isComplete) return currentGuess.padEnd(WORD_LENGTH, " ");
       return "".padEnd(WORD_LENGTH, " ");
     });
   }, [guesses, currentGuess, isComplete]);
@@ -310,7 +301,6 @@ export default function SnowWhiteWordlePage() {
   const rowStatuses = useMemo(() => {
     return Array.from({ length: MAX_GUESSES }, (_, index) => {
       if (index < statuses.length) return statuses[index];
-      // keep array length consistent for mapping
       return Array(WORD_LENGTH).fill(null) as unknown as TileStatus[];
     });
   }, [statuses]);
@@ -319,9 +309,7 @@ export default function SnowWhiteWordlePage() {
 
   const bannerMessage = useMemo(() => {
     if (!isComplete) return null;
-    if (won) {
-      return `Solved! The word was “${solution.toUpperCase()}”.`;
-    }
+    if (won) return `Solved! The word was “${solution.toUpperCase()}”.`;
     return `Tough one — today’s word was “${solution.toUpperCase()}”.`;
   }, [isComplete, won, solution]);
 
@@ -347,10 +335,7 @@ export default function SnowWhiteWordlePage() {
             role="application"
             aria-label="Snow White Wordle board"
           >
-            <div
-              className="grid gap-2"
-              style={{ gridTemplateRows: `repeat(${MAX_GUESSES}, minmax(0, 1fr))` }}
-            >
+            <div className="grid gap-2" style={{ gridTemplateRows: `repeat(${MAX_GUESSES}, minmax(0, 1fr))` }}>
               {rows.map((row, rowIdx) => {
                 const letters = row.split("");
                 const currentStatuses = rowStatuses[rowIdx];
@@ -358,9 +343,7 @@ export default function SnowWhiteWordlePage() {
                   <div
                     key={`row-${rowIdx}`}
                     className="grid gap-2"
-                    style={{
-                      gridTemplateColumns: `repeat(${WORD_LENGTH}, minmax(0, 1fr))`,
-                    }}
+                    style={{ gridTemplateColumns: `repeat(${WORD_LENGTH}, minmax(0, 1fr))` }}
                   >
                     {letters.map((letter, colIdx) => {
                       const status = currentStatuses[colIdx];
@@ -394,30 +377,24 @@ export default function SnowWhiteWordlePage() {
 
           {/* Feedback bubble */}
           {feedback && (
-            <div
-              className="rounded-full border border-lfp-warning bg-lfp-surface px-4 py-2 text-sm text-lfp-text"
-              role="status"
-            >
+            <div className="rounded-full border border-lfp-warning bg-lfp-surface px-4 py-2 text-sm text-lfp-text" role="status">
               {feedback}
             </div>
           )}
 
           {/* Result banner */}
           {isComplete && bannerMessage && (
-            <div
-              className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 text-center text-sm text-lfp-text"
-              role="status"
-            >
+            <div className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 text-center text-sm text-lfp-text" role="status">
               <p className="font-semibold">{bannerMessage}</p>
               <p className="mt-1 text-xs text-lfp-text-weak">New word at midnight.</p>
             </div>
           )}
 
-          {/* Keyboard — switched to responsive grid to prevent overflow */}
+          {/* Keyboard */}
           <div className="w-full rounded-3xl border border-lfp-border bg-lfp-surface p-4 shadow-sm">
             <div className="mx-auto w-full max-w-[720px]">
-              {/* Row 1: 10 keys */}
-              <div className="grid grid-cols-10 gap-1 sm:gap-2 mb-2">
+              {/* Row 1 */}
+              <div className="mb-2 grid grid-cols-10 gap-1 sm:gap-2">
                 {"QWERTYUIOP".split("").map((letter) => {
                   const status = letterState.get(letter.toLowerCase());
                   let keyClasses =
@@ -447,8 +424,8 @@ export default function SnowWhiteWordlePage() {
                 })}
               </div>
 
-              {/* Row 2: 9 keys */}
-              <div className="grid grid-cols-9 gap-1 sm:gap-2 mb-2">
+              {/* Row 2 */}
+              <div className="mb-2 grid grid-cols-9 gap-1 sm:gap-2">
                 {"ASDFGHJKL".split("").map((letter) => {
                   const status = letterState.get(letter.toLowerCase());
                   let keyClasses =
@@ -478,7 +455,7 @@ export default function SnowWhiteWordlePage() {
                 })}
               </div>
 
-              {/* Row 3: Enter + 7 keys + Delete (grid prevents overflow) */}
+              {/* Row 3 */}
               <div className="grid grid-cols-11 gap-1 sm:gap-2">
                 <button
                   type="button"
