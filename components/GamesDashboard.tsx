@@ -98,7 +98,7 @@ export default function GamesDashboard({
             Games
           </h1>
           <p className="mt-2 max-w-xl text-sm text-white/70">
-            Pick a game and dive into Oz while you wait for the next act.
+            Pick a game and have some fun while you wait for the next act.
           </p>
         </header>
 
